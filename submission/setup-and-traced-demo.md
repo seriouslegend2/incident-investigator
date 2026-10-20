@@ -33,6 +33,10 @@ see all roots for one case. Open one agent trace's **Inputs** to see its exact s
 input and allowed tools; open **Outputs** to see its structured result and handoff. D3/D4/D6 are
 independent parallel agent traces. To inspect the durable case ledger without dumping raw data:
 
+Each agent pulls the exact tagged prompt from LangSmith at runtime (for example,
+`incident-investigator-d3-observability:v2`). The checked-in `prompt.py` source is a cached outage
+fallback only, and the trace identifies it as `prompt_source: code-fallback` if used.
+
 ```bash
 uv run python scripts/inspect_case.py case_your_case_id
 ```

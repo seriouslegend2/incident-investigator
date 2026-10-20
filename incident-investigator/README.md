@@ -81,9 +81,12 @@ D-agent creates its own separately listed root trace, named `agent/<role>/<opera
 `prompt.system_message`, `scoped_input` and `agent.allowed_tools`; inspect **Outputs** to see the
 structured answer and its next handoff. D3/D4/D6 are separate parallel agent traces, not one
 prompt. Filter the LangSmith project by `case_id` to see one case's related roots.
-`scripts/push_prompts.py` also publishes the exact code-owned system prompts as eight private,
-versioned LangSmith prompts. The API refuses to run agents if the OpenAI key or database URL is
-absent; it never falls back to deterministic conclusions.
+At runtime, each agent pulls its tagged prompt (for example,
+`incident-investigator-d3-observability:v2`) from LangSmith. `prompt.py` is only a 60-second
+cached fallback if the prompt registry is unavailable; the agent trace marks this as
+`prompt_source: code-fallback`. `scripts/push_prompts.py` publishes the eight versioned prompt
+seeds. The API refuses to run agents if the OpenAI key or database URL is absent; it never falls
+back to deterministic conclusions.
 
 `run_case.py` prints one root LangSmith URL when tracing is on. To inspect the matching durable,
 compact audit trail without dumping raw prompts or evidence, run:

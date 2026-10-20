@@ -6,7 +6,6 @@ from ...models import SPECIALIST_ROLES, AgentRole
 from ..contracts import AgentInvocation
 from ..runtime import AgentRuntime
 from .models import D1PlanOutput
-from .prompt import SYSTEM_PROMPT
 from .tools import build_tools
 
 
@@ -49,7 +48,8 @@ Prior findings:\n{_findings_text(invocation)}
 Return the next plan now."""
     tools = build_tools(invocation, runtime)
     tools_by_name = {tool.name: tool for tool in tools}
-    messages = [SystemMessage(SYSTEM_PROMPT), HumanMessage(prompt)]
+    system_prompt = (await runtime.resolve_prompt(AgentRole.D1, "plan")).system_message
+    messages = [SystemMessage(system_prompt), HumanMessage(prompt)]
     trace_config = runtime.trace_config(invocation, AgentRole.D1, "plan")
     response = (
         await runtime.model()

@@ -6,7 +6,6 @@ from ...models import SPECIALIST_ROLES, AgentRole
 from ..contracts import AgentInvocation
 from ..runtime import AgentRuntime
 from .models import D7ReportReviewInput, D7ReportReviewOutput, D7ReviewOutput
-from .prompt import REPORT_REVIEW_PROMPT, SYSTEM_PROMPT
 
 
 async def _evidence_text(invocation: AgentInvocation, runtime: AgentRuntime) -> str:
@@ -54,10 +53,11 @@ Original records behind cited IDs:\n{source_evidence}
 
 Return an independent review decision."""
     model = runtime.model().with_structured_output(D7ReviewOutput, method="json_schema")
+    system_prompt = (await runtime.resolve_prompt(AgentRole.D7, "review")).system_message
     correction = ""
     for attempt in range(2):
         output = await model.ainvoke(
-            [SystemMessage(SYSTEM_PROMPT), HumanMessage(prompt + correction)],
+            [SystemMessage(system_prompt), HumanMessage(prompt + correction)],
             config=runtime.trace_config(invocation, AgentRole.D7, "review"),
         )
         issues = _review_issues(output, has_read_contract=invocation.read_contract is not None)
@@ -114,7 +114,8 @@ Exact D8 draft JSON:\n{invocation.draft}
 
 Return the final delivery decision."""
     model = runtime.model().with_structured_output(D7ReportReviewOutput, method="json_schema")
+    system_prompt = (await runtime.resolve_prompt(AgentRole.D7, "review_report")).system_message
     return await model.ainvoke(
-        [SystemMessage(REPORT_REVIEW_PROMPT), HumanMessage(prompt)],
+        [SystemMessage(system_prompt), HumanMessage(prompt)],
         config=runtime.trace_config(invocation, AgentRole.D7, "review_report"),
     )

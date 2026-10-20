@@ -7,7 +7,6 @@ from ..contracts import AgentInvocation
 from ..runtime import AgentRuntime
 from ..tool_execution import run_required_tool_then_structure, validate_evidence_citations
 from .models import D4Analysis, D4InvestigateOutput
-from .prompt import SYSTEM_PROMPT
 from .tools import build_tools
 
 
@@ -18,7 +17,7 @@ async def build_d4(invocation: AgentInvocation, runtime: AgentRuntime) -> D4Inve
     analysis, evidence = await run_required_tool_then_structure(
         runtime=runtime,
         invocation=invocation,
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=(await runtime.resolve_prompt(AgentRole.D4, "investigate")).system_message,
         user_prompt=f"Complaint: {invocation.case.complaint}\nTask: {invocation.task.question}\nWhy: {invocation.task.reason}",
         tools=tools,
         output_model=D4Analysis,

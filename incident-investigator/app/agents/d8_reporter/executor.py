@@ -6,7 +6,6 @@ from ...models import AgentRole
 from ..contracts import AgentInvocation
 from ..runtime import AgentRuntime
 from .models import D8DraftOutput
-from .prompt import SYSTEM_PROMPT
 
 
 async def build_d8(invocation: AgentInvocation, runtime: AgentRuntime) -> D8DraftOutput:
@@ -25,10 +24,11 @@ Reviewed findings:\n{findings}
 
 Draft the report now."""
     model = runtime.model().with_structured_output(D8DraftOutput, method="json_schema")
+    system_prompt = (await runtime.resolve_prompt(AgentRole.D8, "write")).system_message
     correction = ""
     for attempt in range(2):
         output = await model.ainvoke(
-            [SystemMessage(SYSTEM_PROMPT), HumanMessage(prompt + correction)],
+            [SystemMessage(system_prompt), HumanMessage(prompt + correction)],
             config=runtime.trace_config(invocation, AgentRole.D8, "write"),
         )
         issues = _draft_issues(output, available_ids)

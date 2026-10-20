@@ -7,7 +7,6 @@ from ..contracts import AgentInvocation
 from ..runtime import AgentRuntime
 from ..tool_execution import run_required_tool_then_structure, validate_evidence_citations
 from .models import D5Analysis, D5InvestigateOutput
-from .prompt import SYSTEM_PROMPT
 from .tools import build_tools
 
 
@@ -19,7 +18,7 @@ async def build_d5(invocation: AgentInvocation, runtime: AgentRuntime) -> D5Inve
     analysis, evidence = await run_required_tool_then_structure(
         runtime=runtime,
         invocation=invocation,
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=(await runtime.resolve_prompt(AgentRole.D5, "investigate")).system_message,
         user_prompt=(
             f"Complaint: {invocation.case.complaint}\nTask: {invocation.task.question}\n"
             f"Authorized contract: relation={contract.relation}, lookup={contract.lookup_field}:"
