@@ -1,0 +1,13 @@
+# Approved non-secret deployment fixture for the local demo only.
+# It models the data contract that a production deployment catalogue would expose.
+scenario_id: email-confirmation-timeout
+service: checkout
+repository: opentelemetry-demo
+revision: 85c2cb2
+code_entrypoint: src/checkout/main.go:sendOrderConfirmation
+downstream_service: email
+data_contract:
+  relation: delivery_events
+  lookup_field: customer_id
+  lookup_value: customer-42
+  allowed_projection: [customer_id, order_id, event_type, provider_receipt, observed_at]

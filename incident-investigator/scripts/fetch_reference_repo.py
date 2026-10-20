@@ -3,7 +3,6 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TARGET = PROJECT_ROOT / "example-systems" / "opentelemetry-demo"
 REFERENCE_URL = "https://github.com/open-telemetry/opentelemetry-demo.git"
