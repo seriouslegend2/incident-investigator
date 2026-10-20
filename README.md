@@ -8,6 +8,7 @@ and the exact draft, and D8 produces the report.
 - Browser-readable architecture: [`research/agent-architecture.html`](research/agent-architecture.html)
 - Production-oriented implementation plan: [`research/implementation-plan.html`](research/implementation-plan.html)
 - Submission navigation only: [`submission/README.md`](submission/README.md)
+- Demo Video: [Watch the demo](https://youtu.be/Rsssxah_Rls)
 
 The OpenTelemetry reference application is intentionally not vendored. Run the documented setup
 script before running the demo so it is cloned at its pinned revision.
