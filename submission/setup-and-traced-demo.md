@@ -47,7 +47,7 @@ For a video-friendly live view, start the API and open `http://127.0.0.1:8000/`:
 uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The page starts the real graph in the background, polls safe agent/tool receipts, and renders the final D8 response only when D7 has approved it. See the [live-demo script](live-demo-video.md).
+The page starts the real graph in the background, polls safe agent/tool receipts, and renders the final D8 response only when D7 has approved it.
 
 ## Run checks
 
