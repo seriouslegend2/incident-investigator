@@ -7,6 +7,7 @@ and the exact draft, and D8 produces the report.
 - Runnable project: [`incident-investigator/`](incident-investigator/)
 - Browser-readable architecture: [`research/agent-architecture.html`](research/agent-architecture.html)
 - Production-oriented implementation plan: [`research/implementation-plan.html`](research/implementation-plan.html)
+- Submission navigation only: [`submission/README.md`](submission/README.md)
 
 The OpenTelemetry reference application is intentionally not vendored. Run the documented setup
 script before running the demo so it is cloned at its pinned revision.

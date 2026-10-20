@@ -9,7 +9,7 @@ agent_definition = AgentDefinition(
     name=AgentRole.D7,
     description="Independent critic for evidence claims and the final report gate.",
     default_model="gpt-4.1-mini",
-    prompt_version="d7-critic-v1",
+    prompt_version="d7-critic-v2 / d7-report-review-v3",
     allowed_tools=(),
     operations={
         "review": (D7ReviewInput, D7ReviewOutput),

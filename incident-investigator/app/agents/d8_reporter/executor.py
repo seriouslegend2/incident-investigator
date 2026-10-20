@@ -25,17 +25,53 @@ Reviewed findings:\n{findings}
 
 Draft the report now."""
     model = runtime.model().with_structured_output(D8DraftOutput, method="json_schema")
-    output = await model.ainvoke(
-        [SystemMessage(SYSTEM_PROMPT), HumanMessage(prompt)],
-        config=runtime.trace_config(invocation, AgentRole.D8, "write"),
-    )
-    unknown = set(output.evidence_ids) - set(available_ids)
-    if unknown:
-        raise ValueError("D8 cited unprovided evidence: " + ", ".join(sorted(unknown)))
+    correction = ""
+    for attempt in range(2):
+        output = await model.ainvoke(
+            [SystemMessage(SYSTEM_PROMPT), HumanMessage(prompt + correction)],
+            config=runtime.trace_config(invocation, AgentRole.D8, "write"),
+        )
+        issues = _draft_issues(output, available_ids)
+        if not issues:
+            return output
+        if attempt == 1:
+            raise ValueError("D8 draft failed delivery checks: " + "; ".join(issues))
+        correction = (
+            "\n\nYour previous draft failed these delivery checks: "
+            + "; ".join(issues)
+            + ". Return a corrected report using only these IDs: "
+            + (", ".join(available_ids) or "none")
+            + ". Do not use the word 'none' as an evidence ID. Every section needs a real evidence ID."
+        )
+    raise AssertionError("unreachable D8 citation-correction loop")
+
+
+def _draft_issues(output: D8DraftOutput, available_ids: list[str]) -> list[str]:
+    cited = set(output.evidence_ids)
     for section in output.sections:
-        unknown_section = set(section.evidence_ids) - set(available_ids)
-        if unknown_section:
-            raise ValueError(
-                "D8 section cited unprovided evidence: " + ", ".join(sorted(unknown_section))
+        cited.update(section.evidence_ids)
+    for hypothesis in output.ranked_hypotheses:
+        cited.update(hypothesis.supporting_evidence_ids)
+        cited.update(hypothesis.contradicting_evidence_ids)
+    issues = (
+        ["invalid evidence IDs: " + ", ".join(sorted(cited - set(available_ids)))]
+        if cited - set(available_ids)
+        else []
+    )
+    if [item.rank for item in output.ranked_hypotheses] != list(
+        range(1, len(output.ranked_hypotheses) + 1)
+    ):
+        issues.append("hypothesis ranks must be consecutive from 1")
+    if any(not section.evidence_ids for section in output.sections):
+        issues.append("every report section needs at least one evidence ID")
+    for hypothesis in output.ranked_hypotheses:
+        if (
+            hypothesis.assessment in {"supported", "possible"}
+            and not hypothesis.supporting_evidence_ids
+        ):
+            issues.append(f"hypothesis #{hypothesis.rank} needs supporting evidence")
+        if hypothesis.assessment == "insufficient" and hypothesis.confidence != "low":
+            issues.append(
+                f"hypothesis #{hypothesis.rank} must use low confidence when insufficient"
             )
-    return output
+    return issues

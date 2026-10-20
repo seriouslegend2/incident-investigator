@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import uuid
 from datetime import UTC, datetime
 from typing import Any, Literal
@@ -7,6 +8,7 @@ from typing import Any, Literal
 from langchain_core.tracers.context import tracing_v2_enabled
 from langgraph.graph import END, START, StateGraph
 from langsmith import Client
+from langsmith.run_helpers import tracing_context
 
 from ..agents.registry import get_agent
 from ..agents.runtime import AgentRuntime, invoke_definition, new_run_id
@@ -19,6 +21,42 @@ from ..models import (
     ReportSection,
 )
 from .state import InvestigationState
+
+
+async def _case_trace_url_from_langsmith(
+    client: Client,
+    *,
+    project_name: str,
+    case_id: str,
+    started_at: datetime,
+) -> str | None:
+    """Find the LangGraph root when the callback cannot supply its URL.
+
+    Explicit ``trace`` child spans deliberately use the shared LangSmith
+    context. Some LangChain versions therefore do not retain a ``latest_run``
+    on the callback used only to ask for a URL, even though the root was
+    successfully persisted. The case id is attached to that root, so use it
+    as a narrow, non-fatal fallback. A tracing URL must never turn a completed
+    investigation into a failed incident.
+    """
+
+    def find_root() -> str | None:
+        roots = client.list_runs(
+            project_name=project_name,
+            start_time=started_at,
+            is_root=True,
+            limit=30,
+        )
+        for run in roots:
+            metadata = (run.extra or {}).get("metadata", {})
+            if metadata.get("case_id") == case_id:
+                return getattr(run, "url", None)
+        return None
+
+    try:
+        return await asyncio.to_thread(find_root)
+    except Exception:
+        return None
 
 
 def _latest_read_contract(findings: list[AgentFinding]) -> Any:
@@ -230,6 +268,17 @@ async def finalize_withheld(state: InvestigationState, runtime: AgentRuntime) ->
         expected_flow=[],
         observed_flow=[],
         conclusion="No incident conclusion was delivered.",
+        ranked_hypotheses=[
+            {
+                "rank": 1,
+                "statement": "The available evidence does not support a delivered root cause.",
+                "assessment": "insufficient",
+                "confidence": "low",
+                "supporting_evidence_ids": evidence_ids,
+                "contradicting_evidence_ids": [],
+                "missing_evidence": ["D7 did not approve a final evidence-grounded report."],
+            }
+        ],
         limitations=[review.rationale, *review.unsupported_claims],
         recommended_next_steps=[task.question for task in getattr(review, "follow_up_tasks", [])],
         sections=[
@@ -336,14 +385,38 @@ async def investigate(case: IncidentCase, runtime: AgentRuntime) -> IncidentRepo
         graph = build_graph(runtime)
         if runtime.settings.langsmith_tracing:
             client = Client(api_key=runtime.settings.langsmith_api_key.get_secret_value())
-            with tracing_v2_enabled(
+            # LangGraph owns the workflow root. The LangSmith context makes
+            # manually-created agent/tool spans children of that active graph
+            # run, so the trace is an actual collaboration tree rather than a
+            # collection of opaque provider calls.
+            with tracing_context(
                 project_name=runtime.settings.langsmith_project,
                 client=client,
-                tags=["incident-investigator", "case-workflow"],
-            ) as tracer:
-                result = await graph.ainvoke(initial_state, graph_config)
+                enabled=True,
+                tags=["incident-investigator", "case-workflow", "multi-agent"],
+                metadata={
+                    "case_id": case.case_id,
+                    "scenario_id": case.scope.scenario_id,
+                },
+            ):
+                with tracing_v2_enabled(
+                    project_name=runtime.settings.langsmith_project,
+                    client=client,
+                    tags=["incident-investigator", "case-workflow", "multi-agent"],
+                ) as tracer:
+                    result = await graph.ainvoke(initial_state, graph_config)
             client.flush()
-            runtime.set_case_trace_url(case.case_id, tracer.get_run_url())
+            try:
+                trace_url = tracer.get_run_url()
+            except ValueError:
+                trace_url = await _case_trace_url_from_langsmith(
+                    client,
+                    project_name=runtime.settings.langsmith_project,
+                    case_id=case.case_id,
+                    started_at=case.created_at,
+                )
+            if trace_url is not None:
+                runtime.set_case_trace_url(case.case_id, trace_url)
         else:
             result = await graph.ainvoke(initial_state, graph_config)
         return IncidentReport.model_validate(result["report"])

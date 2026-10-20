@@ -61,21 +61,21 @@ _PROMPT_DEFINITIONS: dict[tuple[AgentRole, str], tuple[str, str, str, str, str]]
     ),
     (AgentRole.D7, "review"): (
         "incident-investigator-d7-critic",
-        "v1",
+        "v2",
         "D7 evidence-claim review prompt.",
         "app.agents.d7_critic.prompt",
         "SYSTEM_PROMPT",
     ),
     (AgentRole.D7, "review_report"): (
         "incident-investigator-d7-report-review",
-        "v2",
+        "v3",
         "D7 exact-report delivery-gate prompt.",
         "app.agents.d7_critic.prompt",
         "REPORT_REVIEW_PROMPT",
     ),
     (AgentRole.D8, "write"): (
         "incident-investigator-d8-reporter",
-        "v1",
+        "v3",
         "D8 evidence-cited incident report prompt.",
         "app.agents.d8_reporter.prompt",
         "SYSTEM_PROMPT",
@@ -119,7 +119,9 @@ def push_all_prompts(client: Client) -> list[str]:
                 )
             )
         except LangSmithConflictError as exc:
-            if "Nothing to commit" not in str(exc):
+            # LangSmith may reject an idempotent repeat because the exact version tag already
+            # belongs to the unchanged commit. That is equivalent to "Nothing to commit".
+            if "Nothing to commit" not in str(exc) and "already exists on commit" not in str(exc):
                 raise
             commits.append(f"{spec.identifier}:unchanged")
     return commits

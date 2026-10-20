@@ -13,12 +13,123 @@ from ..models import (
     EvidenceRecord,
     IncidentCase,
     IncidentReport,
+    TimelineEvent,
 )
 from .database import Database
 
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _json_object(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            decoded = json.loads(value)
+        except json.JSONDecodeError:
+            return {}
+        return decoded if isinstance(decoded, dict) else {}
+    return {}
+
+
+def _brief(value: Any, *, limit: int = 260) -> str:
+    text = str(value or "").strip()
+    return text if len(text) <= limit else f"{text[: limit - 1].rstrip()}…"
+
+
+def _agent_timeline_details(
+    *,
+    role: AgentRole,
+    operation: str,
+    status: str,
+    input_json: dict[str, Any],
+    output_json: dict[str, Any],
+) -> tuple[str, str, str, list[str]]:
+    """Summarize durable receipts for a presenter; never replay prompts or raw evidence."""
+
+    findings = input_json.get("findings", [])
+    task = _json_object(input_json.get("task"))
+    complaint = _json_object(input_json.get("case")).get("complaint")
+    if operation == "plan":
+        input_summary = f"Complaint: {_brief(complaint)}"
+    elif operation == "investigate":
+        input_summary = f"Question: {_brief(task.get('question'))}"
+    elif operation == "review":
+        input_summary = f"Review {len(findings)} specialist finding(s) and their cited evidence."
+    elif operation == "write":
+        input_summary = f"Write a report from {len(findings)} D7-reviewed finding(s)."
+    elif operation == "review_report":
+        input_summary = "Check the exact D8 draft before it reaches the operator."
+    else:
+        input_summary = "Bounded case-scoped agent input."
+
+    if status == "started":
+        return input_summary, "Running…", "Wait for this bounded agent result.", []
+    if status == "failed":
+        return (
+            input_summary,
+            "Agent output was rejected by a safety or contract check.",
+            "Recover safely: retry a bounded correction or withhold the case.",
+            [],
+        )
+
+    if operation == "plan":
+        tasks = output_json.get("tasks", [])
+        task_summary = "; ".join(
+            f"{item.get('role', 'specialist')}: {_brief(item.get('question'), limit=110)}"
+            for item in tasks
+            if isinstance(item, dict)
+        )
+        next_action = output_json.get("next_action")
+        return (
+            input_summary,
+            f"Plan: {task_summary or 'no specialist task returned'}",
+            (
+                "Start selected specialists in parallel."
+                if next_action == "dispatch"
+                else "Send the current evidence state to D7 for review."
+            ),
+            [],
+        )
+
+    if operation == "investigate":
+        finding = _json_object(output_json.get("finding"))
+        evidence_ids = [str(item) for item in finding.get("evidence_ids", [])][:20]
+        return (
+            input_summary,
+            f"Finding: {_brief(finding.get('answer') or 'No finding was returned.')}",
+            "Join other selected specialist results, then let D7 challenge the combined evidence.",
+            evidence_ids,
+        )
+
+    if operation in {"review", "review_report"}:
+        decision = str(output_json.get("decision", "withhold"))
+        rationale = _brief(output_json.get("rationale"))
+        if operation == "review":
+            next_step = {
+                "approve": "Pass reviewed findings to D8.",
+                "request_follow_up": "Send precise follow-up tasks back through D1.",
+                "withhold": "Create a withheld/inconclusive operator report.",
+            }.get(decision, "Withhold the case rather than invent a conclusion.")
+        else:
+            next_step = (
+                "Release D8's exact approved report to the operator."
+                if decision == "approve"
+                else "Withhold the report because the final draft did not pass review."
+            )
+        return input_summary, f"Decision: {decision}. {rationale}", next_step, []
+
+    if operation == "write":
+        return (
+            input_summary,
+            f"Draft summary: {_brief(output_json.get('summary'))}",
+            "D7 performs the final exact-draft delivery check.",
+            [str(item) for item in output_json.get("evidence_ids", [])][:20],
+        )
+
+    return input_summary, "Agent response recorded.", "Continue the bounded workflow.", []
 
 
 class IncidentRepository:
@@ -273,3 +384,71 @@ class IncidentRepository:
         return IncidentReport.model_validate(
             json.loads(payload) if isinstance(payload, str) else payload
         )
+
+    async def get_case_timeline(self, case_id: str) -> list[TimelineEvent]:
+        """Return a presentation-safe live timeline, never raw prompts or source content."""
+
+        agent_rows = await self._database.pool.fetch(
+            """
+            select run_id, role, operation, status, input_json, output_json, started_at, completed_at
+            from incident.agent_runs
+            where case_id = $1
+            order by started_at asc
+            limit 100
+            """,
+            case_id,
+        )
+        tool_rows = await self._database.pool.fetch(
+            """
+            select tool_call_id, run_id, role, tool_name, arguments_json, status, result_count, created_at
+            from incident.tool_calls
+            where case_id = $1
+            order by created_at asc
+            limit 200
+            """,
+            case_id,
+        )
+        events = []
+        for row in agent_rows:
+            role = AgentRole(row["role"])
+            input_summary, output_summary, next_step, evidence_ids = _agent_timeline_details(
+                role=role,
+                operation=row["operation"],
+                status=row["status"],
+                input_json=_json_object(row["input_json"]),
+                output_json=_json_object(row["output_json"]),
+            )
+            events.append(
+                TimelineEvent(
+                    event_id=row["run_id"],
+                    occurred_at=row["completed_at"] or row["started_at"],
+                    kind="agent",
+                    role=role,
+                    label=f"{row['role']} · {row['operation']}",
+                    status=row["status"],
+                    input_summary=input_summary,
+                    output_summary=output_summary,
+                    next_step=next_step,
+                    evidence_ids=evidence_ids,
+                )
+            )
+        events.extend(
+            TimelineEvent(
+                event_id=row["tool_call_id"],
+                parent_event_id=row["run_id"],
+                occurred_at=row["created_at"],
+                kind="tool",
+                role=AgentRole(row["role"]),
+                label=f"{row['role']} · {row['tool_name']}",
+                status=row["status"],
+                input_summary=(
+                    f"Query: {_brief(_json_object(row['arguments_json']).get('query'))}"
+                    if _json_object(row["arguments_json"]).get("query")
+                    else "Bounded source query under this role's access policy."
+                ),
+                output_summary=f"{row['result_count']} bounded record(s) returned.",
+                next_step=f"Return the bounded result to {row['role']} for its finding.",
+            )
+            for row in tool_rows
+        )
+        return sorted(events, key=lambda item: item.occurred_at)

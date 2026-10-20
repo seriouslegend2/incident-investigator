@@ -11,9 +11,9 @@ def test_runtime_prompt_catalog_has_one_exact_version_for_each_operation() -> No
         (AgentRole.D4, "investigate"): ("incident-investigator-d4-code-deploy", "v2"),
         (AgentRole.D5, "investigate"): ("incident-investigator-d5-data", "v2"),
         (AgentRole.D6, "investigate"): ("incident-investigator-d6-ai-behavior", "v2"),
-        (AgentRole.D7, "review"): ("incident-investigator-d7-critic", "v1"),
-        (AgentRole.D7, "review_report"): ("incident-investigator-d7-report-review", "v2"),
-        (AgentRole.D8, "write"): ("incident-investigator-d8-reporter", "v1"),
+        (AgentRole.D7, "review"): ("incident-investigator-d7-critic", "v2"),
+        (AgentRole.D7, "review_report"): ("incident-investigator-d7-report-review", "v3"),
+        (AgentRole.D8, "write"): ("incident-investigator-d8-reporter", "v3"),
     }
     for (role, operation), (identifier, version) in expected.items():
         spec = prompt_spec(role, operation)

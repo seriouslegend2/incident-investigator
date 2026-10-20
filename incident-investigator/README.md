@@ -6,6 +6,9 @@ D4 reads the locally cloned OpenTelemetry reference repository through a bounded
 connector; it does not receive the repository in its prompt. Agents make live model calls and
 case-scoped tool calls against these sources. No scenario stores a root-cause or final report.
 
+Assignment-facing documents are intentionally split into individual files rather than copied into
+this README. Start at [`../submission/README.md`](../submission/README.md).
+
 For one D1 plan, the runnable LangGraph demo starts independent selected specialist roles in
 parallel and calls D7 once only after their batch join. Unselected role branches are explicit
 no-ops: they make no model or source-tool calls. This prevents each result in a fan-out from
@@ -29,10 +32,12 @@ app/agents/
 `app/agents/registry.py` discovers the seven `agent_definition` exports; D2 is deliberately
 absent. D1 uses only the bounded topology tools. D3–D6 use small source-specific tool families
 (3–4 calls per task); D4 reads only approved local source roots and D5 cannot construct a data
-tool without D4's cited ReadContract. Every model invocation has a durable agent-run row and
-LangSmith metadata containing case/task/agent-run IDs plus the exact prompt identifier, version
-and SHA-256 hash. Every source tool call is case-scoped, parameterized, bounded and persisted as
-evidence.
+tool without D4's cited ReadContract. Every **agent invocation** has a durable agent-run row. In
+LangSmith it is an explicit `agent/<role>/<operation>` span containing the exact system prompt,
+its scoped task envelope, allowed tools, structured output and handoff. Its source reads appear
+below it as `tool/<role>/<tool-name>` spans; model calls appear below the agent rather than being
+mistaken for the agent itself. Prompt identifier, version and SHA-256 hash are also recorded.
+Every source tool call is case-scoped, parameterized, bounded and persisted as evidence.
 
 ## Configure and run
 
@@ -66,11 +71,19 @@ evidence.
      -d '{"scenario_id":"email-confirmation-timeout","complaint":"Customer says their completed order did not receive a confirmation email."}'
    ```
 
-With `LANGSMITH_TRACING=true`, one request-scoped root trace is created for the whole case. Its
-D1/D3/D4/D5/D6/D7/D8/model/tool spans are nested beneath it and carry case/task/agent-run IDs and
-prompt-version metadata. `scripts/push_prompts.py` publishes the exact code-owned system prompts
-as private versioned LangSmith prompts. The API refuses to run agents if the OpenAI key or database
-URL is absent; it never falls back to deterministic conclusions.
+   For a live, presentation-friendly view of the exact D8 report, open
+   `http://127.0.0.1:8000/` after starting the API. The page runs the real graph in the background
+   and displays safe persisted agent/tool receipts while it waits for D7 approval.
+
+With `LANGSMITH_TRACING=true`, LangGraph creates one orchestration root trace and every invoked
+D-agent creates its own separately listed root trace, named `agent/<role>/<operation>`. Open
+`agent/d3/investigate` (or another `agent/...`) and inspect **Inputs** to see
+`prompt.system_message`, `scoped_input` and `agent.allowed_tools`; inspect **Outputs** to see the
+structured answer and its next handoff. D3/D4/D6 are separate parallel agent traces, not one
+prompt. Filter the LangSmith project by `case_id` to see one case's related roots.
+`scripts/push_prompts.py` also publishes the exact code-owned system prompts as eight private,
+versioned LangSmith prompts. The API refuses to run agents if the OpenAI key or database URL is
+absent; it never falls back to deterministic conclusions.
 
 `run_case.py` prints one root LangSmith URL when tracing is on. To inspect the matching durable,
 compact audit trail without dumping raw prompts or evidence, run:

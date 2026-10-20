@@ -9,7 +9,7 @@ agent_definition = AgentDefinition(
     name=AgentRole.D6,
     description="Observed prompt/retrieval/tool/handoff evidence specialist.",
     default_model="gpt-4.1-mini",
-    prompt_version="d6-ai-behavior-v1",
+    prompt_version="d6-ai-behavior-v2",
     allowed_tools=(
         "get_ai_run_trace",
         "get_prompt_snapshot",

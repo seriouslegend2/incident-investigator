@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class AgentRole(str, Enum):
@@ -107,6 +107,18 @@ class ReportSection(BaseModel):
     evidence_ids: list[str] = Field(default_factory=list)
 
 
+class RankedHypothesis(BaseModel):
+    """A reportable explanation, kept distinct from raw observations."""
+
+    rank: int = Field(ge=1, le=5)
+    statement: str = Field(min_length=1, max_length=900)
+    assessment: Literal["supported", "possible", "insufficient"]
+    confidence: Literal["high", "medium", "low"]
+    supporting_evidence_ids: list[str] = Field(default_factory=list, max_length=20)
+    contradicting_evidence_ids: list[str] = Field(default_factory=list, max_length=20)
+    missing_evidence: list[str] = Field(default_factory=list, max_length=6)
+
+
 class IncidentReport(BaseModel):
     case_id: str
     status: Literal["delivered", "withheld"]
@@ -114,6 +126,8 @@ class IncidentReport(BaseModel):
     expected_flow: list[str]
     observed_flow: list[str]
     conclusion: str
+    # Empty only for reports persisted before this field was introduced; new D8 drafts require one.
+    ranked_hypotheses: list[RankedHypothesis] = Field(default_factory=list, max_length=5)
     limitations: list[str]
     recommended_next_steps: list[str]
     sections: list[ReportSection]
@@ -121,10 +135,37 @@ class IncidentReport(BaseModel):
     reviewed_by_d7: bool
     created_at: datetime
 
+    @model_validator(mode="after")
+    def ranks_are_consecutive(self) -> "IncidentReport":
+        if [item.rank for item in self.ranked_hypotheses] != list(
+            range(1, len(self.ranked_hypotheses) + 1)
+        ):
+            raise ValueError("ranked_hypotheses must be ordered consecutively from 1")
+        return self
+
 
 class InvestigationResponse(BaseModel):
     case: IncidentCase
     report: IncidentReport | None = None
+    trace_url: str | None = None
+
+
+class InvestigationStartResponse(BaseModel):
+    case: IncidentCase
+
+
+class TimelineEvent(BaseModel):
+    event_id: str
+    parent_event_id: str | None = None
+    occurred_at: datetime
+    kind: Literal["agent", "tool"]
+    role: AgentRole
+    label: str
+    status: str
+    input_summary: str
+    output_summary: str
+    next_step: str
+    evidence_ids: list[str] = Field(default_factory=list, max_length=20)
 
 
 class SourceCatalogEntry(BaseModel):

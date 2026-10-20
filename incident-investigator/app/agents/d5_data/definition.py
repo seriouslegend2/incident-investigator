@@ -9,7 +9,7 @@ agent_definition = AgentDefinition(
     name=AgentRole.D5,
     description="Read-replica/history evidence specialist; only runs with a D4 ReadContract.",
     default_model="gpt-4.1-mini",
-    prompt_version="d5-data-v1",
+    prompt_version="d5-data-v2",
     allowed_tools=(
         "describe_authorized_projection",
         "lookup_contract_row",

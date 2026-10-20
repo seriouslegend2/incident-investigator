@@ -54,20 +54,43 @@ Original records behind cited IDs:\n{source_evidence}
 
 Return an independent review decision."""
     model = runtime.model().with_structured_output(D7ReviewOutput, method="json_schema")
-    output = await model.ainvoke(
-        [SystemMessage(SYSTEM_PROMPT), HumanMessage(prompt)],
-        config=runtime.trace_config(invocation, AgentRole.D7, "review"),
-    )
+    correction = ""
+    for attempt in range(2):
+        output = await model.ainvoke(
+            [SystemMessage(SYSTEM_PROMPT), HumanMessage(prompt + correction)],
+            config=runtime.trace_config(invocation, AgentRole.D7, "review"),
+        )
+        issues = _review_issues(output, has_read_contract=invocation.read_contract is not None)
+        if not issues:
+            return output
+        if attempt == 0:
+            correction = (
+                "\n\nYour previous review violated this output rule: "
+                + "; ".join(issues)
+                + ". Return a corrected structured review."
+            )
+            continue
+        return D7ReviewOutput(
+            decision="withhold",
+            rationale="Critic output was malformed after one correction attempt; the case is withheld.",
+            follow_up_tasks=[],
+            unsupported_claims=issues,
+        )
+    raise AssertionError("unreachable D7 review-correction loop")
+
+
+def _review_issues(output: D7ReviewOutput, *, has_read_contract: bool) -> list[str]:
+    issues: list[str] = []
     for task in output.follow_up_tasks:
         if task.role not in SPECIALIST_ROLES:
-            raise ValueError(f"D7 selected non-specialist role {task.role.value}")
-        if task.role == AgentRole.D5 and invocation.read_contract is None:
-            raise ValueError("D7 selected D5 without a D4 ReadContract")
+            issues.append(f"D7 selected non-specialist role {task.role.value}")
+        if task.role == AgentRole.D5 and not has_read_contract:
+            issues.append("D7 selected D5 without a D4 ReadContract")
     if output.decision != "request_follow_up" and output.follow_up_tasks:
-        raise ValueError("Only D7 follow-up decisions may include tasks")
+        issues.append("only request_follow_up may include follow-up tasks")
     if output.decision == "request_follow_up" and not output.follow_up_tasks:
-        raise ValueError("D7 requested follow-up without a task")
-    return output
+        issues.append("request_follow_up requires at least one task")
+    return issues
 
 
 async def build_d7_report_review(

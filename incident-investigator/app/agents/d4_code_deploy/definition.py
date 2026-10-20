@@ -9,7 +9,7 @@ agent_definition = AgentDefinition(
     name=AgentRole.D4,
     description="Repository, deployment and configuration evidence specialist; can propose a bounded data ReadContract.",
     default_model="gpt-4.1-mini",
-    prompt_version="d4-code-deploy-v1",
+    prompt_version="d4-code-deploy-v2",
     allowed_tools=(
         "map_service_path",
         "search_code_symbols",

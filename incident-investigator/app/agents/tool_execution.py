@@ -59,11 +59,27 @@ async def run_required_tool_then_structure(
         tool_messages.append(ToolMessage(content=output, tool_call_id=call["id"]))
 
     structured = model.with_structured_output(output_model, method="json_schema")
-    result = await structured.ainvoke(
-        [*messages, response, *tool_messages],
-        config=trace_config,
-    )
-    return result, evidence
+    structure_messages = [*messages, response, *tool_messages]
+    available_ids = ", ".join(item.evidence_id for item in evidence) or "none"
+    for attempt in range(2):
+        result = await structured.ainvoke(structure_messages, config=trace_config)
+        try:
+            # Every current specialist analysis exposes evidence_ids. Keep this generic helper
+            # defensive so a future non-evidence output model can still use it.
+            validate_evidence_citations(list(getattr(result, "evidence_ids", [])), evidence)
+            return result, evidence
+        except ToolProtocolError:
+            if attempt == 1:
+                raise
+            structure_messages = [
+                *structure_messages,
+                HumanMessage(
+                    "Your draft cited an evidence ID that was not returned by your tools. "
+                    f"Return a corrected structured result using only these IDs: {available_ids}. "
+                    "Do not make another tool call or add facts."
+                ),
+            ]
+    raise AssertionError("unreachable citation-correction loop")
 
 
 def validate_evidence_citations(citations: list[str], evidence: list[EvidenceRecord]) -> None:
