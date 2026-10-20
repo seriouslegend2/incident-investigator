@@ -37,7 +37,7 @@
       <tr><td>D3 / D4 / D5 / D6</td><td>The source-specific tool families shown below are implemented and capped at 3–4 calls. D3/D5/D6 use bounded Supabase demo records; D4 uses the local clone/fixture roots.</td><td>Replace each demo connector with its governed production source adapter while retaining the same tool contracts.</td></tr>
       <tr><td>D4 local Git clone</td><td>D4 maps/searches/reads only approved local repository and deployment-fixture snippets. It cannot supply paths, shell commands, Git URLs, or revisions.</td><td>D4 uses the same contract against a revision-aware code-search/index gateway.</td></tr>
       <tr><td>D7 follow-up</td><td>D7 sends follow-up tasks to D1; D1 must retain the requested roles while replanning, then D7 reviews the results. The default critic-follow-up budget is two.</td><td>Production controls the same path with durable queues/timeouts and a global case budget.</td></tr>
-      <tr><td>One D1 task batch</td><td>D1-selected specialist tasks run from one bounded queue, one at a time. Only after the queue is empty does D7 review the complete batch. This prevents one finished specialist from accidentally triggering a new D1 plan.</td><td>Workers may execute independent tasks concurrently, but must use a durable <em>join</em> before the single D7 review.</td></tr>
+      <tr><td>One D1 task batch</td><td>D1-selected specialist roles start in parallel. The graph runs harmless no-op branches for unselected roles so its explicit join waits for one complete batch, then D7 reviews once. This prevents one finished specialist from accidentally triggering a new D1 plan.</td><td>Workers retain the same fan-out + durable <em>join</em> before the single D7 review.</td></tr>
       <tr><td>Scale</td><td>Small Supabase demo records plus one local repository.</td><td>Incremental source indexes and governed gateways in front of huge external source systems.</td></tr>
     </tbody>
   </table>
@@ -72,7 +72,7 @@ Operator complaint
 </pre></div>
 
   <h2>3. Target agents: input → tool/action → output</h2>
-  <p class="small"><strong>Current runnable demo:</strong> each evidence specialist already has the small, source-specific tool family below, capped at 3–4 calls per task. D1 chooses a bounded batch; the demo executes that batch serially and D7 reviews it once. Production may parallelize independent tasks only behind a durable join—not unrestricted Claude-Code/OpenClaw-style access.</p>
+  <p class="small"><strong>Current runnable demo:</strong> each evidence specialist already has the small, source-specific tool family below, capped at 3–4 calls per task. D1 chooses a bounded parallel batch; the graph joins the batch before D7 reviews it once. This is not unrestricted Claude-Code/OpenClaw-style access.</p>
   <table>
     <thead><tr><th>Agent</th><th>It receives</th><th>Its allowed tool / action</th><th>It returns</th></tr></thead>
     <tbody>

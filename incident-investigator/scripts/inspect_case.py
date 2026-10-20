@@ -40,6 +40,7 @@ async def main() -> None:
             select run_id, role, operation, status, model_name, langsmith_run_name,
                    input_json #>> '{prompt,prompt_identifier}' as prompt_identifier,
                    input_json #>> '{prompt,prompt_version}' as prompt_version,
+                   started_at,
                    completed_at, error_message
             from incident.agent_runs
             where case_id = $1

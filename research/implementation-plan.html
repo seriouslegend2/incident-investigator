@@ -29,7 +29,7 @@
 <div class="grid three">
 <article class="card orange"><h3>1. Logical agents, not seven servers</h3><p>D1, D3–D8 are role prompts plus restricted tool permissions. One Worker/runtime can run them. The queue gives each task an ID, timeout, retry/DLQ behavior and callback.</p></article>
 <article class="card green"><h3>2. The model never has direct access</h3><p>An LLM emits a typed tool request. Backend policy checks it. A private gateway queries the configured real source. The LLM sees only bounded, redacted results and evidence IDs.</p></article>
-<article class="card blue"><h3>3. No D2 returns</h3><p>D1 does dynamic reasoning and chooses next checks. D7 independently challenges evidence and the exact report. D8 writes only. There is no mandatory all-agent fan-out or “everything to one summariser” step. In the runnable demo, one D1-selected task batch completes before one D7 review; production parallelism requires a durable join.</p></article>
+<article class="card blue"><h3>3. No D2 returns</h3><p>D1 does dynamic reasoning and chooses next checks. D7 independently challenges evidence and the exact report. D8 writes only. There is no mandatory all-agent fan-out or “everything to one summariser” step. In the runnable demo, only D1-selected roles make parallel calls and a graph join completes before one D7 review; production workers require the same durable join.</p></article>
 </div>
 <div class="callout"><b>What the user gives:</b> a vague sentence such as “messages are not reaching customer group A.” <b>What the system discovers:</b> candidate service, deployed code path, data contract, actual execution, configuration and AI behavior where relevant. The input does not secretly contain the logs or table name.</div>
 </section>

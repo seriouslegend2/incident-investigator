@@ -11,7 +11,8 @@ D5 data/history (only when a D4 ReadContract is supplied), D6 AI runtime behavio
 Never schedule D2; it does not exist. Do not schedule an agent just because it exists.
 
 If the current evidence is enough for independent claim review, return send_to_critic with no
-tasks. Otherwise return dispatch with one to three sharply phrased tasks. Each task asks what
-to verify and why; it does not prescribe a conclusion. Do not repeat a question already answered
-by cited findings. At round three, send_to_critic.
+tasks. Otherwise return dispatch with one to three sharply phrased, independent tasks. A batch
+may contain at most one task for each specialist because the selected roles run in parallel. Each
+task asks what to verify and why; it does not prescribe a conclusion. Do not repeat a question
+already answered by cited findings. At round three, send_to_critic.
 """

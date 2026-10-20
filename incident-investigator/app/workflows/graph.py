@@ -57,29 +57,43 @@ async def run_d1_plan(state: InvestigationState, runtime: AgentRuntime) -> dict[
     }
 
 
-def dispatch_from_d1(state: InvestigationState) -> Literal["run_specialist", "d7_review"]:
-    """Begin one D1-selected batch.
+PARALLEL_SPECIALIST_NODES: dict[AgentRole, str] = {
+    AgentRole.D3: "run_d3",
+    AgentRole.D4: "run_d4",
+    AgentRole.D5: "run_d5",
+    AgentRole.D6: "run_d6",
+}
 
-    Specialist calls deliberately run through one queue in the demo graph.  A
-    direct `Send` fan-out followed by an edge back to D1 would cause every
-    completed specialist to independently re-enter D1, multiplying work and
-    making a batch impossible to review as one unit.  Production workers can
-    fan out this queue and use a durable join, but the graph must retain this
-    one-batch → one-D7-review invariant.
+
+def dispatch_from_d1(
+    state: InvestigationState,
+) -> list[Literal["run_d3", "run_d4", "run_d5", "run_d6"]] | Literal["d7_review"]:
+    """Fan out one D1 batch, then let the graph's static edge form the join.
+
+    We schedule all four role branches so the LangGraph multi-source edge can
+    deterministically wait for every branch. A role with no selected task is a
+    no-op: it makes no model or source-tool call. This prevents the former
+    bug where each completed dynamic branch independently invoked D1 again.
     """
 
     if state["next_action"] != "dispatch" or not state.get("pending_tasks"):
         return "d7_review"
-    return "run_specialist"
+    return list(PARALLEL_SPECIALIST_NODES.values())
 
 
-async def run_specialist(state: InvestigationState, runtime: AgentRuntime) -> dict[str, Any]:
-    pending_tasks = state.get("pending_tasks", [])
-    if not pending_tasks:
-        raise ValueError("Specialist execution requested without a pending task")
-    task = pending_tasks[0]
-    if task.role not in {AgentRole.D3, AgentRole.D4, AgentRole.D5, AgentRole.D6}:
-        raise ValueError(f"{task.role.value} cannot be dispatched as an evidence specialist")
+async def run_specialist_for_role(
+    state: InvestigationState, runtime: AgentRuntime, role: AgentRole
+) -> dict[str, Any]:
+    """Run this role's one planned task, or return a no-op at the batch barrier."""
+
+    if role not in PARALLEL_SPECIALIST_NODES:
+        raise ValueError(f"{role.value} cannot be dispatched as an evidence specialist")
+    tasks = [task for task in state.get("pending_tasks", []) if task.role == role]
+    if not tasks:
+        return {}
+    if len(tasks) != 1:
+        raise ValueError(f"D1 selected more than one {role.value} task in one parallel batch")
+    task = tasks[0]
     invocation = {
         "case": state["case"],
         "task_id": f"task_{uuid.uuid4().hex}",
@@ -101,16 +115,10 @@ async def run_specialist(state: InvestigationState, runtime: AgentRuntime) -> di
         task_id=invocation["task_id"],
         finding=finding,
     )
-    update: dict[str, Any] = {"findings": [finding], "pending_tasks": pending_tasks[1:]}
+    update: dict[str, Any] = {"findings": [finding]}
     if finding.read_contract is not None:
         update["read_contract"] = finding.read_contract
     return update
-
-
-def after_specialist(state: InvestigationState) -> Literal["run_specialist", "d7_review"]:
-    """Continue the D1-selected batch, then give D7 a single review point."""
-
-    return "run_specialist" if state.get("pending_tasks") else "d7_review"
 
 
 async def run_d7_review(state: InvestigationState, runtime: AgentRuntime) -> dict[str, Any]:
@@ -244,8 +252,17 @@ def build_graph(runtime: AgentRuntime) -> Any:
     async def d1_node(state: InvestigationState) -> dict[str, Any]:
         return await run_d1_plan(state, runtime)
 
-    async def specialist_node(state: InvestigationState) -> dict[str, Any]:
-        return await run_specialist(state, runtime)
+    async def d3_node(state: InvestigationState) -> dict[str, Any]:
+        return await run_specialist_for_role(state, runtime, AgentRole.D3)
+
+    async def d4_node(state: InvestigationState) -> dict[str, Any]:
+        return await run_specialist_for_role(state, runtime, AgentRole.D4)
+
+    async def d5_node(state: InvestigationState) -> dict[str, Any]:
+        return await run_specialist_for_role(state, runtime, AgentRole.D5)
+
+    async def d6_node(state: InvestigationState) -> dict[str, Any]:
+        return await run_specialist_for_role(state, runtime, AgentRole.D6)
 
     async def d7_node(state: InvestigationState) -> dict[str, Any]:
         return await run_d7_review(state, runtime)
@@ -264,15 +281,22 @@ def build_graph(runtime: AgentRuntime) -> Any:
 
     graph = StateGraph(InvestigationState)
     graph.add_node("d1_plan", d1_node)
-    graph.add_node("run_specialist", specialist_node)
+    graph.add_node("run_d3", d3_node)
+    graph.add_node("run_d4", d4_node)
+    graph.add_node("run_d5", d5_node)
+    graph.add_node("run_d6", d6_node)
     graph.add_node("d7_review", d7_node)
     graph.add_node("d8_write", d8_node)
     graph.add_node("d7_report_review", d7_report_node)
     graph.add_node("finalize_delivered", delivered_node)
     graph.add_node("finalize_withheld", withheld_node)
     graph.add_edge(START, "d1_plan")
-    graph.add_conditional_edges("d1_plan", dispatch_from_d1, ["run_specialist", "d7_review"])
-    graph.add_conditional_edges("run_specialist", after_specialist, ["run_specialist", "d7_review"])
+    graph.add_conditional_edges(
+        "d1_plan",
+        dispatch_from_d1,
+        ["run_d3", "run_d4", "run_d5", "run_d6", "d7_review"],
+    )
+    graph.add_edge(["run_d3", "run_d4", "run_d5", "run_d6"], "d7_review")
     graph.add_conditional_edges(
         "d7_review", after_d7_review, ["d1_plan", "d8_write", "finalize_withheld"]
     )

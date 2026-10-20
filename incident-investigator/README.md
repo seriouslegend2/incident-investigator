@@ -6,10 +6,10 @@ D4 reads the locally cloned OpenTelemetry reference repository through a bounded
 connector; it does not receive the repository in its prompt. Agents make live model calls and
 case-scoped tool calls against these sources. No scenario stores a root-cause or final report.
 
-For one D1 plan, the runnable LangGraph demo executes selected specialist tasks from a bounded
-queue and calls D7 once only after that queue is complete. This prevents each result in a
-fan-out from independently triggering a new D1 plan. A production worker pool may parallelize
-independent tasks only with a durable batch join before D7.
+For one D1 plan, the runnable LangGraph demo starts independent selected specialist roles in
+parallel and calls D7 once only after their batch join. Unselected role branches are explicit
+no-ops: they make no model or source-tool calls. This prevents each result in a fan-out from
+independently triggering a new D1 plan.
 
 ## Structure
 
