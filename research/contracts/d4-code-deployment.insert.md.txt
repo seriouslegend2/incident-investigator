@@ -1,0 +1,175 @@
+## Exact runtime input, tools and structured answer
+
+Runs as a logical task in the investigation backend, not a separate VM or preloaded copy of the application. The backend executes tools and calls the model repeatedly. [Runtime and source locations](../runtime-and-tools.md).
+
+Full required Task-v1 + AgentAnswer-v1 + trusted Result-v1 fixture: [d4-example.json](../contracts/d4-example.json). Exact machine-readable types: [agent-io.schema.json](../contracts/agent-io.schema.json). The fixture is synthetic, not evidence or a mandatory execution order.
+
+The task-specific `role_input` sent to this agent is:
+
+```json
+{
+  "search_terms": [
+    "recipient resolution",
+    "recipient_missing"
+  ],
+  "repository_refs": [
+    "repo:delivery"
+  ],
+  "service_refs": [
+    "service:delivery"
+  ],
+  "artifact_refs": [],
+  "read_contract_refs": []
+}
+```
+
+It also receives the shared question, scope, known premises, unknowns, knowledge references/excerpts, dependency versions and budget. Null/empty fields mean not discovered; they are not secretly supplied. Relevant code/schema/log findings can be shared through `knowledge` and `evidence.fetch`; expertise boundaries do not isolate knowledge. Credentials and authority remain connector-side.
+
+Permitted operations (further restricted per task):
+
+| Tool | Exactly what it does |
+| --- | --- |
+| `catalog.search` | Find candidate sources/services/repos by feature terms; does not establish the failing component. |
+| `catalog.describe` | Describe one discovered source, capabilities, relationships and freshness. |
+| `case.read` | Read a bounded current, review or report snapshot and its references. |
+| `evidence.fetch` | Fetch cited original excerpts or accepted shared artifacts, including code-to-data read contracts. |
+| `code.search` | Locate candidate paths, text matches or symbols across authorized repositories. |
+| `code.read_at_revision` | Read an exact versioned file range; no execution of its code. |
+| `code.references` | Find definitions, callers or references to a discovered symbol. |
+| `code.diff` | Compare two discovered immutable source revisions. |
+| `build.provenance` | Resolve a built artifact to recorded source inputs and build identity. |
+| `deploy.history` | Read releases, failed rollouts and placement changes in a bounded interval. |
+| `deploy.instance_binding` | Bind the affected instance/attempt time to artifact/config where recorded. |
+| `config.effective` | Inspect effective nonsecret settings, connection identities and secret-version metadata. |
+| `config.history` | Read recorded setting changes and effective intervals. |
+| `infra.inspect` | Inspect a discovered infrastructure resource or policy for a bounded question. |
+| `data.describe_source` | Resolve database identity, replica relationship, query/history support and freshness. |
+| `data.inspect_schema` | Search permitted relation/column metadata or describe a discovered relation. |
+
+Every argument, returned `data` field, source backend and guard is specified in the [tool catalog](../tool-catalog.md). Tool errors/coverage are connector-owned receipts, distinct from the agent's interpretations.
+
+The model returns shared fields `agent_id`, `execution_status`, `observations`, `interpretations`, `unknowns`, `coverage_receipt_refs`, `suggested_followups`, plus this role's required `implementation_findings` object:
+
+```json
+{
+  "implementation_refs": [
+    {
+      "repository_ref": "repo:delivery",
+      "commit": "fixture-commit-r18",
+      "path": "src/delivery.ts",
+      "start_line": 40,
+      "end_line": 66,
+      "evidence_refs": [
+        "E3"
+      ]
+    }
+  ],
+  "runtime_bindings": [
+    {
+      "service_ref": "service:delivery",
+      "instance_ref": "instance:W",
+      "artifact_ref": "artifact:r18",
+      "source_revisions": [
+        "fixture-commit-r18"
+      ],
+      "config_refs": [
+        "config:W"
+      ],
+      "evidence_refs": [
+        "E3B"
+      ],
+      "unknowns": []
+    }
+  ],
+  "behavior_contract": {
+    "summary": "Read the active customer route; abort before send if legacy destination is empty.",
+    "intended_behavior_refs": [],
+    "read_contracts": [
+      {
+        "caller": {
+          "repository_ref": "repo:delivery",
+          "commit": "fixture-commit-r18",
+          "path": "src/delivery.ts",
+          "start_line": 40,
+          "end_line": 66,
+          "evidence_refs": [
+            "E3"
+          ]
+        },
+        "service_ref": "service:delivery",
+        "runtime_binding_refs": [
+          "E3B"
+        ],
+        "connection_key": "MESSAGING_DB",
+        "database_source_ref": "db:messaging",
+        "relation": "messaging.group_routes",
+        "lookup": [
+          {
+            "field": "customer_id",
+            "op": "eq",
+            "value_origin": "delivery job.customer_id",
+            "evidence_refs": [
+              "E3"
+            ]
+          },
+          {
+            "field": "active",
+            "op": "eq",
+            "value_origin": "literal true",
+            "evidence_refs": [
+              "E3"
+            ]
+          }
+        ],
+        "selected_fields": [
+          "legacy_destination_id"
+        ],
+        "transformations": [],
+        "failure_behavior": "Empty legacy_destination_id causes recipient_missing before provider send.",
+        "consistency_stage_refs": [],
+        "evidence_refs": [
+          "E3"
+        ],
+        "unknowns": [
+          "Incident-time row values; actual reader consistency context."
+        ]
+      }
+    ],
+    "failure_branches": [
+      "recipient_missing on empty legacy_destination_id"
+    ],
+    "evidence_refs": [
+      "E3"
+    ]
+  },
+  "connections": [
+    {
+      "from_ref": "service:delivery",
+      "to_ref": "db:messaging",
+      "kind": "database_read",
+      "basis": "static",
+      "evidence_refs": [
+        "E3"
+      ]
+    }
+  ],
+  "candidate_mechanisms": [
+    {
+      "id": "H1",
+      "explanation": "Missing or incompatible destination representation may explain the lookup failure.",
+      "state": "provisional",
+      "support_refs": [
+        "E1",
+        "E3"
+      ],
+      "counterevidence_refs": [],
+      "unknowns": [
+        "Incident-time data"
+      ],
+      "confidence_rationale": "Implementation and failure stage align; historical data has not been established."
+    }
+  ]
+}
+```
+
+This is the exact role-specific object; the linked fixture contains the whole answer and runtime wrapper. Unknowns remain explicit even on `complete` tasks. Runtime validates requested agent identity and source references, adds trusted task/revision IDs, actual tool errors and measured costs, then performs applicability checks before D1 uses the result. A well-formed JSON answer is not proof of semantic correctness.

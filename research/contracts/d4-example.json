@@ -1,0 +1,423 @@
+{
+  "description": "Synthetic teaching fixture. Evidence IDs/content are invented and must not enter a real case. Not a fixed agent execution order.",
+  "task": {
+    "protocol_version": "1",
+    "case_id": "I17",
+    "task_id": "T-D4",
+    "attempt_id": "T-D4-A1",
+    "agent_id": "D4",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "inquiry_kind": "discovery",
+    "question": "Explain the failing recipient-resolution stage and its deployed binding; discover its data dependencies.",
+    "known_premises": [
+      {
+        "claim_ref": "C1@1",
+        "evidence_refs": [
+          "E1"
+        ]
+      }
+    ],
+    "exploratory_assumptions": [],
+    "unknowns": [
+      "Incident-time data and causal attribution."
+    ],
+    "why_now": "The current case snapshot establishes the prerequisite for this scoped question.",
+    "expected_information": "Explain the failing recipient-resolution stage and its deployed binding; discover its data dependencies.",
+    "scope": {
+      "entity_refs": [
+        "service:delivery",
+        "customer:G42"
+      ],
+      "feature_terms": [
+        "customer group messaging"
+      ],
+      "environment": "production",
+      "time_range": {
+        "start": "2026-10-20T10:25:00Z",
+        "end": "2026-10-20T10:40:00Z",
+        "basis": "event"
+      },
+      "repository_refs": [
+        "repo:delivery"
+      ]
+    },
+    "dependency_versions": [
+      {
+        "ref": "C1",
+        "version": "1"
+      }
+    ],
+    "prerequisite_task_refs": [],
+    "knowledge": {
+      "brief": "Use cited originals; the failure stage is localized, while the underlying cause remains unresolved.",
+      "artifact_refs": [
+        "snapshot:case-4"
+      ],
+      "excerpts": [],
+      "read_contract_refs": []
+    },
+    "budget": {
+      "tool_calls_max": 8,
+      "wall_ms_max": 60000,
+      "model_tokens_max": 12000,
+      "output_tokens_max": 2500
+    },
+    "output_contract": "AgentAnswer-v1",
+    "role_input": {
+      "search_terms": [
+        "recipient resolution",
+        "recipient_missing"
+      ],
+      "repository_refs": [
+        "repo:delivery"
+      ],
+      "service_refs": [
+        "service:delivery"
+      ],
+      "artifact_refs": [],
+      "read_contract_refs": []
+    }
+  },
+  "answer": {
+    "agent_id": "D4",
+    "execution_status": "complete",
+    "observations": [
+      {
+        "id": "O-D4-1",
+        "text": "The inspected source reads legacy_destination_id.",
+        "evidence_refs": [
+          "E3"
+        ],
+        "temporal_basis": "static",
+        "limitations": []
+      }
+    ],
+    "interpretations": [],
+    "unknowns": [
+      "Incident-time data; broader impact."
+    ],
+    "coverage_receipt_refs": [
+      "call:D4-fixture"
+    ],
+    "suggested_followups": [
+      {
+        "agent_id": "D5",
+        "question": "Establish incident-time values for the discovered lookup scope, or retain the gap.",
+        "premise_refs": [
+          "E1",
+          "E3",
+          "RC1"
+        ],
+        "unknowns": [
+          "Historical row values"
+        ],
+        "expected_information": "Time-matched fields and source-history coverage."
+      }
+    ],
+    "implementation_findings": {
+      "implementation_refs": [
+        {
+          "repository_ref": "repo:delivery",
+          "commit": "fixture-commit-r18",
+          "path": "src/delivery.ts",
+          "start_line": 40,
+          "end_line": 66,
+          "evidence_refs": [
+            "E3"
+          ]
+        }
+      ],
+      "runtime_bindings": [
+        {
+          "service_ref": "service:delivery",
+          "instance_ref": "instance:W",
+          "artifact_ref": "artifact:r18",
+          "source_revisions": [
+            "fixture-commit-r18"
+          ],
+          "config_refs": [
+            "config:W"
+          ],
+          "evidence_refs": [
+            "E3B"
+          ],
+          "unknowns": []
+        }
+      ],
+      "behavior_contract": {
+        "summary": "Read the active customer route; abort before send if legacy destination is empty.",
+        "intended_behavior_refs": [],
+        "read_contracts": [
+          {
+            "caller": {
+              "repository_ref": "repo:delivery",
+              "commit": "fixture-commit-r18",
+              "path": "src/delivery.ts",
+              "start_line": 40,
+              "end_line": 66,
+              "evidence_refs": [
+                "E3"
+              ]
+            },
+            "service_ref": "service:delivery",
+            "runtime_binding_refs": [
+              "E3B"
+            ],
+            "connection_key": "MESSAGING_DB",
+            "database_source_ref": "db:messaging",
+            "relation": "messaging.group_routes",
+            "lookup": [
+              {
+                "field": "customer_id",
+                "op": "eq",
+                "value_origin": "delivery job.customer_id",
+                "evidence_refs": [
+                  "E3"
+                ]
+              },
+              {
+                "field": "active",
+                "op": "eq",
+                "value_origin": "literal true",
+                "evidence_refs": [
+                  "E3"
+                ]
+              }
+            ],
+            "selected_fields": [
+              "legacy_destination_id"
+            ],
+            "transformations": [],
+            "failure_behavior": "Empty legacy_destination_id causes recipient_missing before provider send.",
+            "consistency_stage_refs": [],
+            "evidence_refs": [
+              "E3"
+            ],
+            "unknowns": [
+              "Incident-time row values; actual reader consistency context."
+            ]
+          }
+        ],
+        "failure_branches": [
+          "recipient_missing on empty legacy_destination_id"
+        ],
+        "evidence_refs": [
+          "E3"
+        ]
+      },
+      "connections": [
+        {
+          "from_ref": "service:delivery",
+          "to_ref": "db:messaging",
+          "kind": "database_read",
+          "basis": "static",
+          "evidence_refs": [
+            "E3"
+          ]
+        }
+      ],
+      "candidate_mechanisms": [
+        {
+          "id": "H1",
+          "explanation": "Missing or incompatible destination representation may explain the lookup failure.",
+          "state": "provisional",
+          "support_refs": [
+            "E1",
+            "E3"
+          ],
+          "counterevidence_refs": [],
+          "unknowns": [
+            "Incident-time data"
+          ],
+          "confidence_rationale": "Implementation and failure stage align; historical data has not been established."
+        }
+      ]
+    }
+  },
+  "result": {
+    "protocol_version": "1",
+    "result_id": "result:D4-fixture",
+    "case_id": "I17",
+    "task_id": "T-D4",
+    "attempt_id": "T-D4-A1",
+    "agent_id": "D4",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "dependency_versions": [
+      {
+        "ref": "C1",
+        "version": "1"
+      }
+    ],
+    "answer_state": "valid",
+    "answer": {
+      "agent_id": "D4",
+      "execution_status": "complete",
+      "observations": [
+        {
+          "id": "O-D4-1",
+          "text": "The inspected source reads legacy_destination_id.",
+          "evidence_refs": [
+            "E3"
+          ],
+          "temporal_basis": "static",
+          "limitations": []
+        }
+      ],
+      "interpretations": [],
+      "unknowns": [
+        "Incident-time data; broader impact."
+      ],
+      "coverage_receipt_refs": [
+        "call:D4-fixture"
+      ],
+      "suggested_followups": [
+        {
+          "agent_id": "D5",
+          "question": "Establish incident-time values for the discovered lookup scope, or retain the gap.",
+          "premise_refs": [
+            "E1",
+            "E3",
+            "RC1"
+          ],
+          "unknowns": [
+            "Historical row values"
+          ],
+          "expected_information": "Time-matched fields and source-history coverage."
+        }
+      ],
+      "implementation_findings": {
+        "implementation_refs": [
+          {
+            "repository_ref": "repo:delivery",
+            "commit": "fixture-commit-r18",
+            "path": "src/delivery.ts",
+            "start_line": 40,
+            "end_line": 66,
+            "evidence_refs": [
+              "E3"
+            ]
+          }
+        ],
+        "runtime_bindings": [
+          {
+            "service_ref": "service:delivery",
+            "instance_ref": "instance:W",
+            "artifact_ref": "artifact:r18",
+            "source_revisions": [
+              "fixture-commit-r18"
+            ],
+            "config_refs": [
+              "config:W"
+            ],
+            "evidence_refs": [
+              "E3B"
+            ],
+            "unknowns": []
+          }
+        ],
+        "behavior_contract": {
+          "summary": "Read the active customer route; abort before send if legacy destination is empty.",
+          "intended_behavior_refs": [],
+          "read_contracts": [
+            {
+              "caller": {
+                "repository_ref": "repo:delivery",
+                "commit": "fixture-commit-r18",
+                "path": "src/delivery.ts",
+                "start_line": 40,
+                "end_line": 66,
+                "evidence_refs": [
+                  "E3"
+                ]
+              },
+              "service_ref": "service:delivery",
+              "runtime_binding_refs": [
+                "E3B"
+              ],
+              "connection_key": "MESSAGING_DB",
+              "database_source_ref": "db:messaging",
+              "relation": "messaging.group_routes",
+              "lookup": [
+                {
+                  "field": "customer_id",
+                  "op": "eq",
+                  "value_origin": "delivery job.customer_id",
+                  "evidence_refs": [
+                    "E3"
+                  ]
+                },
+                {
+                  "field": "active",
+                  "op": "eq",
+                  "value_origin": "literal true",
+                  "evidence_refs": [
+                    "E3"
+                  ]
+                }
+              ],
+              "selected_fields": [
+                "legacy_destination_id"
+              ],
+              "transformations": [],
+              "failure_behavior": "Empty legacy_destination_id causes recipient_missing before provider send.",
+              "consistency_stage_refs": [],
+              "evidence_refs": [
+                "E3"
+              ],
+              "unknowns": [
+                "Incident-time row values; actual reader consistency context."
+              ]
+            }
+          ],
+          "failure_branches": [
+            "recipient_missing on empty legacy_destination_id"
+          ],
+          "evidence_refs": [
+            "E3"
+          ]
+        },
+        "connections": [
+          {
+            "from_ref": "service:delivery",
+            "to_ref": "db:messaging",
+            "kind": "database_read",
+            "basis": "static",
+            "evidence_refs": [
+              "E3"
+            ]
+          }
+        ],
+        "candidate_mechanisms": [
+          {
+            "id": "H1",
+            "explanation": "Missing or incompatible destination representation may explain the lookup failure.",
+            "state": "provisional",
+            "support_refs": [
+              "E1",
+              "E3"
+            ],
+            "counterevidence_refs": [],
+            "unknowns": [
+              "Incident-time data"
+            ],
+            "confidence_rationale": "Implementation and failure stage align; historical data has not been established."
+          }
+        ]
+      }
+    },
+    "tool_receipt_refs": [
+      "call:D4-fixture"
+    ],
+    "errors": [],
+    "cost": {
+      "elapsed_ms": 102,
+      "tool_calls": 1,
+      "model_calls": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "backend_scanned_bytes": null
+    }
+  }
+}

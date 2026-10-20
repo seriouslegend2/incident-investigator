@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Incident Investigator — Simple Agent Architecture</title>
+  <style>
+    :root { --ink:#152238; --muted:#5c687a; --line:#dce3ed; --bg:#f5f7fb; --card:#fff; --blue:#1967d2; --green:#13795b; --orange:#b45309; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif; }
+    main { max-width:1180px; margin:auto; padding:32px 20px 64px; } h1 { margin:0 0 8px; font-size:30px; } h2 { margin:34px 0 12px; font-size:21px; } h3 { margin:0 0 7px; font-size:16px; }
+    p { margin:7px 0; } .lead { color:var(--muted); font-size:17px; max-width:900px; } .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(235px,1fr)); gap:14px; }
+    .card, .flow, table { background:var(--card); border:1px solid var(--line); border-radius:12px; } .card { padding:16px; } .tag { display:inline-block; font-weight:700; font-size:12px; padding:2px 8px; border-radius:99px; background:#e8f0fe; color:var(--blue); }
+    .real { background:#e7f6ef; color:var(--green); } .next { background:#fff2df; color:var(--orange); } .flow { padding:18px; overflow:auto; } pre { margin:0; font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; white-space:pre; }
+    table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; } th,td { padding:12px; vertical-align:top; text-align:left; border-bottom:1px solid var(--line); } th { background:#edf3fc; font-size:13px; } tr:last-child td { border-bottom:0; } code { background:#edf1f6; padding:1px 4px; border-radius:4px; color:#25364f; }
+    .yes { color:var(--green); font-weight:700; } .no { color:#9a3412; font-weight:700; } .small { color:var(--muted); font-size:13px; } ol { padding-left:23px; } li { margin:6px 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Incident Investigator — simple architecture</h1>
+  <p class="lead">An operator gives only a vague complaint. The system finds evidence itself. Models never receive the whole repository, database, or log archive.</p>
+  <p class="small"><strong>Reading key:</strong> green means implemented and verified locally; the billion-scale index layer remains the production target. The runnable demo uses the same bounded-tool shape against one local repository and simulated Supabase sources.</p>
+
+  <h2>1. What we have and what we will use</h2>
+  <div class="grid">
+    <section class="card"><span class="tag real">READY</span><h3>Local reference codebase</h3><p><code>incident-investigator/example-systems/opentelemetry-demo</code></p><p>OpenTelemetry Astronomy Shop, commit <code>85c2cb2</code>. Checkout, email, payment, deployment Compose files, and an AI/chatbot service.</p></section>
+    <section class="card"><span class="tag real">READY</span><h3>Supabase investigator store</h3><p>Migration and seed completed in isolated <code>incident</code> schema.</p><p>It stores cases, agent runs, tool calls, captured evidence, findings, reports, and simulated source data.</p></section>
+    <section class="card"><span class="tag real">READY</span><h3>Real LLM + trace runtime</h3><p>OpenAI is called for agent decisions. Each case produces one LangSmith root trace with nested agent/model/tool spans, and eight private, code-owned versioned prompts. No stored diagnosis is returned.</p></section>
+    <section class="card"><span class="tag real">READY</span><h3>Bounded local code connector</h3><p>D4 searches the cloned repository and approved deployment fixture directory, returning small path/line snippets only.</p><p>It does <strong>not</strong> send the repository to the model.</p></section>
+  </div>
+
+  <h3>Current runtime versus target architecture — do not mix these</h3>
+  <table>
+    <thead><tr><th>Part</th><th>Current runnable code</th><th>Target architecture on this page</th></tr></thead>
+    <tbody>
+      <tr><td>D1</td><td>Up to two control-plane index calls: <code>resolve_feature_scope</code> and <code>expand_dependency_path</code>. A backend fallback supplies one scope packet if a model misses its tool call.</td><td>At production scale, these query the precomputed estate index rather than the local demo index.</td></tr>
+      <tr><td>D3 / D4 / D5 / D6</td><td>The source-specific tool families shown below are implemented and capped at 3–4 calls. D3/D5/D6 use bounded Supabase demo records; D4 uses the local clone/fixture roots.</td><td>Replace each demo connector with its governed production source adapter while retaining the same tool contracts.</td></tr>
+      <tr><td>D4 local Git clone</td><td>D4 maps/searches/reads only approved local repository and deployment-fixture snippets. It cannot supply paths, shell commands, Git URLs, or revisions.</td><td>D4 uses the same contract against a revision-aware code-search/index gateway.</td></tr>
+      <tr><td>D7 follow-up</td><td>D7 sends follow-up tasks to D1; D1 must retain the requested roles while replanning, then D7 reviews the results. The default critic-follow-up budget is two.</td><td>Production controls the same path with durable queues/timeouts and a global case budget.</td></tr>
+      <tr><td>One D1 task batch</td><td>D1-selected specialist tasks run from one bounded queue, one at a time. Only after the queue is empty does D7 review the complete batch. This prevents one finished specialist from accidentally triggering a new D1 plan.</td><td>Workers may execute independent tasks concurrently, but must use a durable <em>join</em> before the single D7 review.</td></tr>
+      <tr><td>Scale</td><td>Small Supabase demo records plus one local repository.</td><td>Incremental source indexes and governed gateways in front of huge external source systems.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. One simple picture</h2>
+  <div class="flow"><pre>
+Operator complaint
+       │  "Customer says their order confirmation did not arrive"
+       ▼
+ D1 — ORCHESTRATOR ── asks the index for a small candidate scope ──┐
+       │                                                   │
+       ├──────────────► D3 observability ─► indexed logs/traces/metrics → tiny raw samples
+       ├──────────────► D4 code + deploy  ─► code/deploy index → exact Git snippets
+       │                         │
+       │                         └─ cited data contract only if code/config names it
+       ├──────────────► D5 data          ─► read-only, contract-scoped rows
+       └──────────────► D6 AI behavior   ─► prompt/retrieval/tool/handoff records
+                                                           │
+                                     one completed batch   ▼
+                                                  D7 — CRITIC
+                                    ┌──── approve ────┐  │  ┌── withhold → incomplete result
+                                    │                 │  │  │
+                                    │                 ▼  │  │
+                                    │        D8 — REPORT WRITER
+                                    │                 │
+                                    │                 ▼
+                                    │    D7 checks exact final draft → operator report
+                                    │
+                                    └── gap found: precise follow-up task ──► D1
+                                                                         │
+                                                                         └── D3/D4/D5/D6 as needed ──► D7
+</pre></div>
+
+  <h2>3. Target agents: input → tool/action → output</h2>
+  <p class="small"><strong>Current runnable demo:</strong> each evidence specialist already has the small, source-specific tool family below, capped at 3–4 calls per task. D1 chooses a bounded batch; the demo executes that batch serially and D7 reviews it once. Production may parallelize independent tasks only behind a durable join—not unrestricted Claude-Code/OpenClaw-style access.</p>
+  <table>
+    <thead><tr><th>Agent</th><th>It receives</th><th>Its allowed tool / action</th><th>It returns</th></tr></thead>
+    <tbody>
+      <tr><td><strong>D1</strong><br>orchestrator</td><td>Complaint, trusted tenant/environment/time scope, current cited findings, and a small candidate-scope packet.</td><td><strong>At most 2 control-plane calls:</strong><br><code>resolve_feature_scope</code><br><code>expand_dependency_path</code><br><span class="small">Queries the service/code/deployment index; returns candidate services/edges, not raw code/logs.</span></td><td>Next tasks. It cannot invent evidence, query a database, or read raw sources.</td></tr>
+      <tr><td><strong>D3</strong><br>observability</td><td>One D1 question, scenario/time scope.</td><td><strong>At most 3 calls:</strong><br><code>find_trace_or_request</code><br><code>search_log_slice</code><br><code>get_metric_or_provider_window</code><br><span class="small">Each returns bounded correlated records, never all logs.</span></td><td>Observed event sequence, gaps, cited evidence IDs, limits.</td></tr>
+      <tr><td><strong>D4</strong><br>code + deploy</td><td>One D1 question, checked-out repository revision.</td><td><strong>At most 4 calls:</strong><br><code>map_service_path</code><br><code>search_code_symbols</code><br><code>read_source_range</code><br><code>get_deployment_or_config_diff</code><br><span class="small">Fixed local repository/config roots; no shell or arbitrary file path.</span></td><td>Expected code path and config facts. May propose a data contract only when cited evidence names the relation.</td></tr>
+      <tr><td><strong>D5</strong><br>data</td><td>One D1 question <strong>plus</strong> D4's verified contract: relation + lookup field + value.</td><td><strong>At most 3 calls:</strong><br><code>describe_authorized_projection</code><br><code>lookup_contract_row</code><br><code>get_contract_history</code><br><span class="small">Backend chooses the read-only view/query; model sends no SQL, host, schema, or table name.</span></td><td>Rows found, absent rows, freshness/coverage. No writes, no arbitrary SQL.</td></tr>
+      <tr><td><strong>D6</strong><br>AI behavior</td><td>One D1 question and relevant run/correlation IDs.</td><td><strong>At most 4 calls:</strong><br><code>get_ai_run_trace</code><br><code>get_prompt_snapshot</code><br><code>get_retrieval_snapshot</code><br><code>get_tool_handoff_timeline</code><br><span class="small">Only approved run metadata and redacted snapshots.</span></td><td>Whether evidence supports prompt, retrieval, tool, handoff, or model behavior.</td></tr>
+      <tr><td><strong>D7</strong><br>critic</td><td>Candidate findings, cited evidence IDs, then D8's exact draft.</td><td><span class="no">No source tool.</span> Citation/scope/conflict/claim check.</td><td><code>approve</code>; or a precise follow-up task sent back through D1; or <code>withhold</code>.</td></tr>
+      <tr><td><strong>D8</strong><br>reporter</td><td>Only D7-reviewed findings and their evidence IDs.</td><td><span class="no">No source tool.</span></td><td>Expected flow vs observed flow, supported conclusion, limits, next checks, citations.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Example: “order confirmation did not arrive”</h2>
+  <ol>
+    <li><strong>D1 starts with no evidence.</strong> It asks D3: “trace this order's confirmation path”; and D4: “find checkout → email code and deployment path.”</li>
+    <li><strong>D3</strong> first finds the matching trace/request, then searches its log slice, then checks the narrow delivery/error metric window. It returns only those correlated records.</li>
+    <li><strong>D4</strong> maps the service path, searches the local clone for <code>sendOrderConfirmation</code>, reads a small source range, and checks the matching deployment/config difference. The checkout service posts to email and uses a one-second deadline. D4 cites path/line snippets; this is not yet a causal claim.</li>
+    <li>If D4's cited code/deployment contract names a delivery relation, <strong>D1 can then ask D5</strong> to describe the allowed projection, look up the exact row, and inspect its short history. Without that contract, D5 is blocked.</li>
+    <li><strong>D7</strong> checks whether the proposed reason is supported. If evidence conflicts, it sends a narrow follow-up task <strong>back to D1</strong>. D1 routes it to the needed specialist, then D7 reviews the new evidence again.</li>
+    <li><strong>D8</strong> writes <em>expected path → observed path → conclusion or “insufficient evidence”</em>. D7 checks the exact wording before delivery.</li>
+  </ol>
+
+  <h2>5. Important boundaries</h2>
+  <table>
+    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+    <tbody>
+      <tr><td>Does D1 know the whole architecture?</td><td>No. A bounded index lookup returns a small candidate workflow slice; D4 then proves the relevant code/deploy path with source citations.</td></tr>
+      <tr><td>Does an agent receive all code/logs as prompt input?</td><td>No. A bounded tool retrieves small records/snippets; only those enter that agent's context.</td></tr>
+      <tr><td>Why not just one search tool?</td><td>Search discovers candidates; it cannot reliably show a trace path, exact source context, a deploy diff, a data history, or an AI handoff. Each specialist therefore gets 3–4 purpose-built reads with strict scope and call limits.</td></tr>
+      <tr><td>Can D5 change data?</td><td>No. D5 is read-only. Supabase writes are made by our investigator backend to record cases/evidence/reports.</td></tr>
+      <tr><td>Can every specialist be called?</td><td>No. D1 chooses based on complaint/evidence gaps. D7 can request a narrower second task.</td></tr>
+      <tr><td>Honest status now?</td><td>Supabase storage, seven agent packages, LangGraph workflow, source-specific bounded tools, OpenAI runtime, prompt publishing, LangSmith tracing, local reference repo, and an email-confirmation live run are ready. The billion-scale ingestion/index layer is still a production build phase.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. How this works at billion-line / billion-log scale</h2>
+  <p class="lead">Agents do not scan repositories or log archives. Connectors continuously build and update narrow indexes. During an incident, agents query those indexes first and fetch raw source only by exact, already-scoped identifiers.</p>
+  <div class="flow"><pre>
+Many repos + CI/CD + cloud inventory + telemetry platforms + data catalog + AI trace platform
+                                      │
+                                      ▼  continuous incremental ingest (not during an incident)
+ ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+ │ Evidence Navigator / index layer  —  not an agent and not D2                                 │
+ │ • service ownership + API/event dependency graph     • code symbol/call graph + Git revision │
+ │ • deployment/config → running revision map           • trace/log/metric time-service indexes │
+ │ • approved data contracts/views                       • AI run/prompt/retrieval index         │
+ └──────────────────────────────────────────────────────────────────────────────────────────────┘
+                                      │  returns 10–50 candidate nodes/edges, never billions
+                                      ▼
+                       D1 → selected specialists → exact bounded source reads
+</pre></div>
+  <table>
+    <thead><tr><th>Huge source</th><th>What is built before any incident</th><th>What the agent reads during an incident</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Billions of code lines / many repos</strong></td><td>Git webhook ingestion; repository/service registry; symbol and call graph; endpoint/event map; ownership; commit/deployment revision links. This is incremental per commit.</td><td>D1 gets candidate workflow edges. D4 searches symbols/identifiers in that small scope, then reads only exact <code>repo + revision + path + line range</code> snippets.</td></tr>
+      <tr><td><strong>Billions of logs, metrics and traces</strong></td><td>The observability platform partitions/indexes by tenant, time, service, severity, trace/request/correlation ID and fields. Aggregate/error facets are precomputed by that platform.</td><td>D3 begins with a narrow time/service/trace query, examines aggregate/error facets, then retrieves a capped set of correlated raw events. It never downloads a day's log archive.</td></tr>
+      <tr><td><strong>Many databases</strong></td><td>A governed data catalogue maps code-owned contracts to approved read-only views, owners, retention and tenant policies.</td><td>D5 receives only D4's cited contract. The backend executes one parameterized read against the named replica/view and returns a capped projection/history.</td></tr>
+      <tr><td><strong>AI applications</strong></td><td>Prompt versions, retrieval document IDs, tool/handoff spans and model metadata are indexed by run/correlation ID.</td><td>D6 fetches one run timeline and the associated redacted prompt/retrieval/tool snapshots.</td></tr>
+    </tbody>
+  </table>
+  <p class="small"><strong>Where Supabase fits:</strong> it is our durable investigation ledger and the small demo data source. It is not the place to ingest a production billion-log archive. In production, source-specific backends keep that scale; Supabase stores the case, tasks, citations, findings, report and audit trail.</p>
+</main>
+</body>
+</html>

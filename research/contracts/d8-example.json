@@ -1,0 +1,313 @@
+{
+  "description": "Synthetic teaching fixture. Evidence IDs/content are invented and must not enter a real case. Not a fixed agent execution order.",
+  "task": {
+    "protocol_version": "1",
+    "case_id": "I17",
+    "task_id": "T-D8",
+    "attempt_id": "T-D8-A1",
+    "agent_id": "D8",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "inquiry_kind": "report_draft",
+    "question": "Draft a concise cause-unresolved report from the assigned snapshot and cited findings; do not invent the missing history.",
+    "known_premises": [
+      {
+        "claim_ref": "C1@1",
+        "evidence_refs": [
+          "E1"
+        ]
+      }
+    ],
+    "exploratory_assumptions": [],
+    "unknowns": [
+      "Incident-time data and causal attribution."
+    ],
+    "why_now": "The current case snapshot establishes the prerequisite for this scoped question.",
+    "expected_information": "Draft a concise cause-unresolved report from the assigned snapshot and cited findings; do not invent the missing history.",
+    "scope": {
+      "entity_refs": [
+        "service:delivery",
+        "customer:G42"
+      ],
+      "feature_terms": [
+        "customer group messaging"
+      ],
+      "environment": "production",
+      "time_range": {
+        "start": "2026-10-20T10:25:00Z",
+        "end": "2026-10-20T10:40:00Z",
+        "basis": "event"
+      },
+      "repository_refs": [
+        "repo:delivery"
+      ]
+    },
+    "dependency_versions": [
+      {
+        "ref": "C1",
+        "version": "1"
+      }
+    ],
+    "prerequisite_task_refs": [],
+    "knowledge": {
+      "brief": "Use cited originals; the failure stage is localized, while the underlying cause remains unresolved.",
+      "artifact_refs": [
+        "snapshot:case-4"
+      ],
+      "excerpts": [],
+      "read_contract_refs": []
+    },
+    "budget": {
+      "tool_calls_max": 8,
+      "wall_ms_max": 60000,
+      "model_tokens_max": 12000,
+      "output_tokens_max": 2500
+    },
+    "output_contract": "AgentAnswer-v1",
+    "role_input": {
+      "report_snapshot_ref": "snapshot:report-4",
+      "requested_diagnosis_status": "cause_unresolved",
+      "claim_refs": [
+        "C1@1",
+        "C2@1",
+        "C3@1"
+      ],
+      "claim_review_refs": [
+        "review:C1",
+        "review:C2",
+        "review:C3"
+      ],
+      "output_format": "incident_report",
+      "supersedes_report_ref": null
+    }
+  },
+  "answer": {
+    "agent_id": "D8",
+    "execution_status": "complete",
+    "observations": [
+      {
+        "id": "O-D8-1",
+        "text": "The report snapshot supports a localized failure but retains the causal gap.",
+        "evidence_refs": [
+          "E1",
+          "E3",
+          "E4"
+        ],
+        "temporal_basis": "runtime",
+        "limitations": []
+      }
+    ],
+    "interpretations": [],
+    "unknowns": [
+      "Incident-time data; broader impact."
+    ],
+    "coverage_receipt_refs": [
+      "call:D8-fixture"
+    ],
+    "suggested_followups": [],
+    "report_draft": {
+      "report_ref": "report:I17-v1",
+      "report_version": 1,
+      "diagnosis_status": "cause_unresolved",
+      "content": {
+        "diagnosis_status": "cause_unresolved",
+        "sections": [
+          {
+            "title": "Observed issue",
+            "text": "For M17, recipient resolution recorded a terminal failure before a provider send.",
+            "claim_refs": [
+              "C1@1"
+            ],
+            "evidence_refs": [
+              "E1",
+              "E4"
+            ]
+          },
+          {
+            "title": "Implemented versus observed",
+            "text": "The bound implementation reads legacy_destination_id and stops when empty. M17 recorded an empty result and stopped.",
+            "claim_refs": [
+              "C2@1"
+            ],
+            "evidence_refs": [
+              "E3",
+              "E3B",
+              "E4"
+            ]
+          },
+          {
+            "title": "Cause remains unresolved",
+            "text": "Current row values do not establish what data the worker could read at incident time.",
+            "claim_refs": [
+              "C3@1"
+            ],
+            "evidence_refs": [
+              "E2"
+            ]
+          }
+        ],
+        "claim_refs": [
+          "C1@1",
+          "C2@1",
+          "C3@1"
+        ],
+        "evidence_refs": [
+          "E1",
+          "E2",
+          "E3",
+          "E3B",
+          "E4"
+        ],
+        "limitations": [
+          "No time-matched row history is available in this fixture; broader customer impact is unverified."
+        ],
+        "proposed_actions": [
+          {
+            "action": "Obtain time-matched row/read evidence before promoting a data or compatibility explanation.",
+            "prerequisites": [
+              "Authorized history source or retained application read records"
+            ],
+            "risks": [
+              "A current-state query cannot substitute for historical evidence."
+            ],
+            "evidence_refs": [
+              "E2",
+              "E3"
+            ]
+          }
+        ]
+      },
+      "dependency_manifest_ref": "manifest:report-I17-v1",
+      "issues_for_D1": []
+    }
+  },
+  "result": {
+    "protocol_version": "1",
+    "result_id": "result:D8-fixture",
+    "case_id": "I17",
+    "task_id": "T-D8",
+    "attempt_id": "T-D8-A1",
+    "agent_id": "D8",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "dependency_versions": [
+      {
+        "ref": "C1",
+        "version": "1"
+      }
+    ],
+    "answer_state": "valid",
+    "answer": {
+      "agent_id": "D8",
+      "execution_status": "complete",
+      "observations": [
+        {
+          "id": "O-D8-1",
+          "text": "The report snapshot supports a localized failure but retains the causal gap.",
+          "evidence_refs": [
+            "E1",
+            "E3",
+            "E4"
+          ],
+          "temporal_basis": "runtime",
+          "limitations": []
+        }
+      ],
+      "interpretations": [],
+      "unknowns": [
+        "Incident-time data; broader impact."
+      ],
+      "coverage_receipt_refs": [
+        "call:D8-fixture"
+      ],
+      "suggested_followups": [],
+      "report_draft": {
+        "report_ref": "report:I17-v1",
+        "report_version": 1,
+        "diagnosis_status": "cause_unresolved",
+        "content": {
+          "diagnosis_status": "cause_unresolved",
+          "sections": [
+            {
+              "title": "Observed issue",
+              "text": "For M17, recipient resolution recorded a terminal failure before a provider send.",
+              "claim_refs": [
+                "C1@1"
+              ],
+              "evidence_refs": [
+                "E1",
+                "E4"
+              ]
+            },
+            {
+              "title": "Implemented versus observed",
+              "text": "The bound implementation reads legacy_destination_id and stops when empty. M17 recorded an empty result and stopped.",
+              "claim_refs": [
+                "C2@1"
+              ],
+              "evidence_refs": [
+                "E3",
+                "E3B",
+                "E4"
+              ]
+            },
+            {
+              "title": "Cause remains unresolved",
+              "text": "Current row values do not establish what data the worker could read at incident time.",
+              "claim_refs": [
+                "C3@1"
+              ],
+              "evidence_refs": [
+                "E2"
+              ]
+            }
+          ],
+          "claim_refs": [
+            "C1@1",
+            "C2@1",
+            "C3@1"
+          ],
+          "evidence_refs": [
+            "E1",
+            "E2",
+            "E3",
+            "E3B",
+            "E4"
+          ],
+          "limitations": [
+            "No time-matched row history is available in this fixture; broader customer impact is unverified."
+          ],
+          "proposed_actions": [
+            {
+              "action": "Obtain time-matched row/read evidence before promoting a data or compatibility explanation.",
+              "prerequisites": [
+                "Authorized history source or retained application read records"
+              ],
+              "risks": [
+                "A current-state query cannot substitute for historical evidence."
+              ],
+              "evidence_refs": [
+                "E2",
+                "E3"
+              ]
+            }
+          ]
+        },
+        "dependency_manifest_ref": "manifest:report-I17-v1",
+        "issues_for_D1": []
+      }
+    },
+    "tool_receipt_refs": [
+      "call:D8-fixture"
+    ],
+    "errors": [],
+    "cost": {
+      "elapsed_ms": 106,
+      "tool_calls": 1,
+      "model_calls": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "backend_scanned_bytes": null
+    }
+  }
+}

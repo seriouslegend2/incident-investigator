@@ -1,0 +1,291 @@
+{
+  "description": "Synthetic teaching fixture. Evidence IDs/content are invented and must not enter a real case. Not a fixed agent execution order.",
+  "task": {
+    "protocol_version": "1",
+    "case_id": "I17",
+    "task_id": "T-D6",
+    "attempt_id": "T-D6-A1",
+    "agent_id": "D6",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "inquiry_kind": "hypothesis_test",
+    "question": "Inspect the observed wrong-answer run, actual lookup output and next-step input; locate supported divergence.",
+    "known_premises": [
+      {
+        "claim_ref": "C-AI1@1",
+        "evidence_refs": [
+          "E6"
+        ]
+      }
+    ],
+    "exploratory_assumptions": [],
+    "unknowns": [
+      "Whether an application transformation lost the field or trace retention omitted it."
+    ],
+    "why_now": "The current case snapshot establishes the prerequisite for this scoped question.",
+    "expected_information": "Inspect the observed wrong-answer run, actual lookup output and next-step input; locate supported divergence.",
+    "scope": {
+      "entity_refs": [
+        "workflow:order-assistant",
+        "run:17"
+      ],
+      "feature_terms": [
+        "order assistant wrong answer"
+      ],
+      "environment": "production",
+      "time_range": {
+        "start": "2026-10-20T10:25:00Z",
+        "end": "2026-10-20T10:40:00Z",
+        "basis": "event"
+      },
+      "repository_refs": []
+    },
+    "dependency_versions": [
+      {
+        "ref": "C-AI1",
+        "version": "1"
+      }
+    ],
+    "prerequisite_task_refs": [],
+    "knowledge": {
+      "brief": "Use cited originals; the failure stage is localized, while the underlying cause remains unresolved.",
+      "artifact_refs": [
+        "snapshot:case-4"
+      ],
+      "excerpts": [],
+      "read_contract_refs": []
+    },
+    "budget": {
+      "tool_calls_max": 8,
+      "wall_ms_max": 60000,
+      "model_tokens_max": 12000,
+      "output_tokens_max": 2500
+    },
+    "output_contract": "AgentAnswer-v1",
+    "role_input": {
+      "search_terms": [
+        "order assistant",
+        "wrong answer"
+      ],
+      "workflow_refs": [
+        "workflow:order-assistant"
+      ],
+      "run_refs": [
+        "run:17"
+      ],
+      "behavior_basis_refs": [
+        "E6"
+      ],
+      "implementation_contract_refs": []
+    }
+  },
+  "answer": {
+    "agent_id": "D6",
+    "execution_status": "complete",
+    "observations": [
+      {
+        "id": "O-D6-1",
+        "text": "Retained lookup output and next-step input differ in one order field.",
+        "evidence_refs": [
+          "E7",
+          "E8"
+        ],
+        "temporal_basis": "runtime",
+        "limitations": []
+      }
+    ],
+    "interpretations": [],
+    "unknowns": [
+      "Actual transformation behavior versus retained trace coverage."
+    ],
+    "coverage_receipt_refs": [
+      "call:D6-fixture"
+    ],
+    "suggested_followups": [],
+    "ai_findings": {
+      "run_scope": {
+        "workflow_refs": [
+          "workflow:order-assistant"
+        ],
+        "run_refs": [
+          "run:17"
+        ],
+        "step_refs": [
+          "step:lookup",
+          "step:answer"
+        ],
+        "version_refs": []
+      },
+      "behavior_basis": {
+        "description": "The task was to answer using the returned order.",
+        "evidence_refs": [
+          "E6"
+        ],
+        "assumptions": []
+      },
+      "stage_observations": [
+        {
+          "stage_ref": "step:lookup",
+          "input_refs": [
+            "E7-in"
+          ],
+          "output_refs": [
+            "E7-out"
+          ],
+          "evidence_refs": [
+            "E7"
+          ],
+          "limitations": []
+        },
+        {
+          "stage_ref": "step:answer",
+          "input_refs": [
+            "E8-in"
+          ],
+          "output_refs": [
+            "E8-out"
+          ],
+          "evidence_refs": [
+            "E8"
+          ],
+          "limitations": []
+        }
+      ],
+      "divergence": [
+        {
+          "description": "A returned order field is absent from the retained next-step input.",
+          "expected_refs": [
+            "E6",
+            "E7-out"
+          ],
+          "observed_refs": [
+            "E8-in"
+          ],
+          "unknowns": [
+            "Whether the transformation or trace retention omitted it."
+          ]
+        }
+      ],
+      "candidate_mechanisms": []
+    }
+  },
+  "result": {
+    "protocol_version": "1",
+    "result_id": "result:D6-fixture",
+    "case_id": "I17",
+    "task_id": "T-D6",
+    "attempt_id": "T-D6-A1",
+    "agent_id": "D6",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "dependency_versions": [
+      {
+        "ref": "C-AI1",
+        "version": "1"
+      }
+    ],
+    "answer_state": "valid",
+    "answer": {
+      "agent_id": "D6",
+      "execution_status": "complete",
+      "observations": [
+        {
+          "id": "O-D6-1",
+          "text": "Retained lookup output and next-step input differ in one order field.",
+          "evidence_refs": [
+            "E7",
+            "E8"
+          ],
+          "temporal_basis": "runtime",
+          "limitations": []
+        }
+      ],
+      "interpretations": [],
+      "unknowns": [
+        "Actual transformation behavior versus retained trace coverage."
+      ],
+      "coverage_receipt_refs": [
+        "call:D6-fixture"
+      ],
+      "suggested_followups": [],
+      "ai_findings": {
+        "run_scope": {
+          "workflow_refs": [
+            "workflow:order-assistant"
+          ],
+          "run_refs": [
+            "run:17"
+          ],
+          "step_refs": [
+            "step:lookup",
+            "step:answer"
+          ],
+          "version_refs": []
+        },
+        "behavior_basis": {
+          "description": "The task was to answer using the returned order.",
+          "evidence_refs": [
+            "E6"
+          ],
+          "assumptions": []
+        },
+        "stage_observations": [
+          {
+            "stage_ref": "step:lookup",
+            "input_refs": [
+              "E7-in"
+            ],
+            "output_refs": [
+              "E7-out"
+            ],
+            "evidence_refs": [
+              "E7"
+            ],
+            "limitations": []
+          },
+          {
+            "stage_ref": "step:answer",
+            "input_refs": [
+              "E8-in"
+            ],
+            "output_refs": [
+              "E8-out"
+            ],
+            "evidence_refs": [
+              "E8"
+            ],
+            "limitations": []
+          }
+        ],
+        "divergence": [
+          {
+            "description": "A returned order field is absent from the retained next-step input.",
+            "expected_refs": [
+              "E6",
+              "E7-out"
+            ],
+            "observed_refs": [
+              "E8-in"
+            ],
+            "unknowns": [
+              "Whether the transformation or trace retention omitted it."
+            ]
+          }
+        ],
+        "candidate_mechanisms": []
+      }
+    },
+    "tool_receipt_refs": [
+      "call:D6-fixture"
+    ],
+    "errors": [],
+    "cost": {
+      "elapsed_ms": 104,
+      "tool_calls": 1,
+      "model_calls": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "backend_scanned_bytes": null
+    }
+  }
+}

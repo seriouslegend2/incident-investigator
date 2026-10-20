@@ -1,0 +1,259 @@
+{
+  "description": "Synthetic teaching fixture. Evidence IDs/content are invented and must not enter a real case. Not a fixed agent execution order.",
+  "task": {
+    "protocol_version": "1",
+    "case_id": "I17",
+    "task_id": "T-D7",
+    "attempt_id": "T-D7-A1",
+    "agent_id": "D7",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "inquiry_kind": "verification",
+    "question": "Review the scoped lookup explanation and challenge missing causal prerequisites.",
+    "known_premises": [
+      {
+        "claim_ref": "C1@1",
+        "evidence_refs": [
+          "E1"
+        ]
+      }
+    ],
+    "exploratory_assumptions": [],
+    "unknowns": [
+      "Incident-time data and causal attribution."
+    ],
+    "why_now": "The current case snapshot establishes the prerequisite for this scoped question.",
+    "expected_information": "Review the scoped lookup explanation and challenge missing causal prerequisites.",
+    "scope": {
+      "entity_refs": [
+        "service:delivery",
+        "customer:G42"
+      ],
+      "feature_terms": [
+        "customer group messaging"
+      ],
+      "environment": "production",
+      "time_range": {
+        "start": "2026-10-20T10:25:00Z",
+        "end": "2026-10-20T10:40:00Z",
+        "basis": "event"
+      },
+      "repository_refs": [
+        "repo:delivery"
+      ]
+    },
+    "dependency_versions": [
+      {
+        "ref": "C1",
+        "version": "1"
+      }
+    ],
+    "prerequisite_task_refs": [],
+    "knowledge": {
+      "brief": "Use cited originals; the failure stage is localized, while the underlying cause remains unresolved.",
+      "artifact_refs": [
+        "snapshot:case-4"
+      ],
+      "excerpts": [],
+      "read_contract_refs": []
+    },
+    "budget": {
+      "tool_calls_max": 8,
+      "wall_ms_max": 60000,
+      "model_tokens_max": 12000,
+      "output_tokens_max": 2500
+    },
+    "output_contract": "AgentAnswer-v1",
+    "role_input": {
+      "target": {
+        "kind": "claims",
+        "claim_refs": [
+          "C2@1"
+        ],
+        "report_ref": null,
+        "report_hash": null,
+        "manifest_ref": "manifest:C2@1",
+        "scope_revision": 2
+      },
+      "review_snapshot_ref": "snapshot:review-4",
+      "supporting_refs": [
+        "E1",
+        "E3",
+        "E4"
+      ],
+      "contradicting_refs": [],
+      "unresolved_questions": [
+        "Incident-time row values"
+      ]
+    }
+  },
+  "answer": {
+    "agent_id": "D7",
+    "execution_status": "complete",
+    "observations": [
+      {
+        "id": "O-D7-1",
+        "text": "E2 is a current-state query, not historical row evidence.",
+        "evidence_refs": [
+          "E2"
+        ],
+        "temporal_basis": "current",
+        "limitations": []
+      }
+    ],
+    "interpretations": [],
+    "unknowns": [
+      "Incident-time data; broader impact."
+    ],
+    "coverage_receipt_refs": [
+      "call:D7-fixture"
+    ],
+    "suggested_followups": [],
+    "review": {
+      "target": {
+        "kind": "claims",
+        "claim_refs": [
+          "C2@1"
+        ],
+        "report_ref": null,
+        "report_hash": null,
+        "manifest_ref": "manifest:C2@1",
+        "scope_revision": 2
+      },
+      "verdict": "insufficient",
+      "accepted_scope": [
+        "The inspected deployed lookup failed for M17."
+      ],
+      "objections": [
+        {
+          "text": "Current E2 values cannot establish incident-time data or prove a compatibility cause.",
+          "affected_refs": [
+            "C2@1",
+            "H1"
+          ],
+          "evidence_refs": [
+            "E2",
+            "E3"
+          ]
+        }
+      ],
+      "required_followups": [
+        {
+          "agent_id": "D5",
+          "question": "Establish incident-time values for the discovered lookup scope, or retain the gap.",
+          "premise_refs": [
+            "E1",
+            "E3",
+            "RC1"
+          ],
+          "unknowns": [
+            "Historical row values"
+          ],
+          "expected_information": "Time-matched fields and source-history coverage."
+        }
+      ],
+      "limitations": [
+        "Incident-time row history is unavailable so far."
+      ]
+    }
+  },
+  "result": {
+    "protocol_version": "1",
+    "result_id": "result:D7-fixture",
+    "case_id": "I17",
+    "task_id": "T-D7",
+    "attempt_id": "T-D7-A1",
+    "agent_id": "D7",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "dependency_versions": [
+      {
+        "ref": "C1",
+        "version": "1"
+      }
+    ],
+    "answer_state": "valid",
+    "answer": {
+      "agent_id": "D7",
+      "execution_status": "complete",
+      "observations": [
+        {
+          "id": "O-D7-1",
+          "text": "E2 is a current-state query, not historical row evidence.",
+          "evidence_refs": [
+            "E2"
+          ],
+          "temporal_basis": "current",
+          "limitations": []
+        }
+      ],
+      "interpretations": [],
+      "unknowns": [
+        "Incident-time data; broader impact."
+      ],
+      "coverage_receipt_refs": [
+        "call:D7-fixture"
+      ],
+      "suggested_followups": [],
+      "review": {
+        "target": {
+          "kind": "claims",
+          "claim_refs": [
+            "C2@1"
+          ],
+          "report_ref": null,
+          "report_hash": null,
+          "manifest_ref": "manifest:C2@1",
+          "scope_revision": 2
+        },
+        "verdict": "insufficient",
+        "accepted_scope": [
+          "The inspected deployed lookup failed for M17."
+        ],
+        "objections": [
+          {
+            "text": "Current E2 values cannot establish incident-time data or prove a compatibility cause.",
+            "affected_refs": [
+              "C2@1",
+              "H1"
+            ],
+            "evidence_refs": [
+              "E2",
+              "E3"
+            ]
+          }
+        ],
+        "required_followups": [
+          {
+            "agent_id": "D5",
+            "question": "Establish incident-time values for the discovered lookup scope, or retain the gap.",
+            "premise_refs": [
+              "E1",
+              "E3",
+              "RC1"
+            ],
+            "unknowns": [
+              "Historical row values"
+            ],
+            "expected_information": "Time-matched fields and source-history coverage."
+          }
+        ],
+        "limitations": [
+          "Incident-time row history is unavailable so far."
+        ]
+      }
+    },
+    "tool_receipt_refs": [
+      "call:D7-fixture"
+    ],
+    "errors": [],
+    "cost": {
+      "elapsed_ms": 105,
+      "tool_calls": 1,
+      "model_calls": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "backend_scanned_bytes": null
+    }
+  }
+}

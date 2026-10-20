@@ -1,0 +1,161 @@
+{
+  "description": "Synthetic teaching fixture. Evidence IDs/content are invented and must not enter a real case. Not a fixed agent execution order.",
+  "task": {
+    "protocol_version": "1",
+    "case_id": "I17",
+    "task_id": "T-D1",
+    "attempt_id": "T-D1-A1",
+    "agent_id": "D1",
+    "case_revision": 0,
+    "scope_revision": 0,
+    "inquiry_kind": "discovery",
+    "question": "Discover which incident the complaint refers to and choose useful next questions.",
+    "known_premises": [],
+    "exploratory_assumptions": [],
+    "unknowns": [
+      "Affected customer, event time, service and actual symptom."
+    ],
+    "why_now": "New unverified complaint.",
+    "expected_information": "Discover which incident the complaint refers to and choose useful next questions.",
+    "scope": {
+      "entity_refs": [],
+      "feature_terms": [
+        "customer group messaging"
+      ],
+      "environment": null,
+      "time_range": null,
+      "repository_refs": []
+    },
+    "dependency_versions": [],
+    "prerequisite_task_refs": [],
+    "knowledge": {
+      "brief": "Only the complaint is known. No service/table/cause is established.",
+      "artifact_refs": [],
+      "excerpts": [],
+      "read_contract_refs": []
+    },
+    "budget": {
+      "tool_calls_max": 8,
+      "wall_ms_max": 60000,
+      "model_tokens_max": 12000,
+      "output_tokens_max": 2500
+    },
+    "output_contract": "AgentAnswer-v1",
+    "role_input": {
+      "trigger": "bootstrap",
+      "report_text": "The customer group did not receive the message.",
+      "case_snapshot_ref": null,
+      "new_result_refs": []
+    }
+  },
+  "answer": {
+    "agent_id": "D1",
+    "execution_status": "complete",
+    "observations": [
+      {
+        "id": "O-D1-1",
+        "text": "Catalog returned a candidate delivery service.",
+        "evidence_refs": [
+          "E0"
+        ],
+        "temporal_basis": "declared",
+        "limitations": []
+      }
+    ],
+    "interpretations": [],
+    "unknowns": [
+      "Correct incident match."
+    ],
+    "coverage_receipt_refs": [
+      "call:D1-fixture"
+    ],
+    "suggested_followups": [],
+    "lead_decision": {
+      "action": "delegate",
+      "knowledge_delta": [
+        {
+          "text": "Catalog search returned a candidate delivery service, not a confirmed incident match.",
+          "kind": "observation",
+          "evidence_refs": [
+            "E0"
+          ]
+        }
+      ],
+      "hypothesis_updates": [],
+      "dispatched_task_refs": [
+        "task:D3-discovery"
+      ],
+      "clarification_ref": null,
+      "report_ref": null,
+      "decision_reason": "Investigate matching attempts before naming a failing component or cause.",
+      "stop_reason": null
+    }
+  },
+  "result": {
+    "protocol_version": "1",
+    "result_id": "result:D1-fixture",
+    "case_id": "I17",
+    "task_id": "T-D1",
+    "attempt_id": "T-D1-A1",
+    "agent_id": "D1",
+    "case_revision": 0,
+    "scope_revision": 0,
+    "dependency_versions": [],
+    "answer_state": "valid",
+    "answer": {
+      "agent_id": "D1",
+      "execution_status": "complete",
+      "observations": [
+        {
+          "id": "O-D1-1",
+          "text": "Catalog returned a candidate delivery service.",
+          "evidence_refs": [
+            "E0"
+          ],
+          "temporal_basis": "declared",
+          "limitations": []
+        }
+      ],
+      "interpretations": [],
+      "unknowns": [
+        "Correct incident match."
+      ],
+      "coverage_receipt_refs": [
+        "call:D1-fixture"
+      ],
+      "suggested_followups": [],
+      "lead_decision": {
+        "action": "delegate",
+        "knowledge_delta": [
+          {
+            "text": "Catalog search returned a candidate delivery service, not a confirmed incident match.",
+            "kind": "observation",
+            "evidence_refs": [
+              "E0"
+            ]
+          }
+        ],
+        "hypothesis_updates": [],
+        "dispatched_task_refs": [
+          "task:D3-discovery"
+        ],
+        "clarification_ref": null,
+        "report_ref": null,
+        "decision_reason": "Investigate matching attempts before naming a failing component or cause.",
+        "stop_reason": null
+      }
+    },
+    "tool_receipt_refs": [
+      "call:D1-fixture"
+    ],
+    "errors": [],
+    "cost": {
+      "elapsed_ms": 100,
+      "tool_calls": 1,
+      "model_calls": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "backend_scanned_bytes": null
+    }
+  }
+}

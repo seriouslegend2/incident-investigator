@@ -1,0 +1,122 @@
+## Exact runtime input, tools and structured answer
+
+Runs as a logical task in the investigation backend, not a separate VM or preloaded copy of the application. The backend executes tools and calls the model repeatedly. [Runtime and source locations](../runtime-and-tools.md).
+
+Full required Task-v1 + AgentAnswer-v1 + trusted Result-v1 fixture: [d6-example.json](../contracts/d6-example.json). Exact machine-readable types: [agent-io.schema.json](../contracts/agent-io.schema.json). The fixture is synthetic, not evidence or a mandatory execution order.
+
+The task-specific `role_input` sent to this agent is:
+
+```json
+{
+  "search_terms": [
+    "order assistant",
+    "wrong answer"
+  ],
+  "workflow_refs": [
+    "workflow:order-assistant"
+  ],
+  "run_refs": [
+    "run:17"
+  ],
+  "behavior_basis_refs": [
+    "E6"
+  ],
+  "implementation_contract_refs": []
+}
+```
+
+It also receives the shared question, scope, known premises, unknowns, knowledge references/excerpts, dependency versions and budget. Null/empty fields mean not discovered; they are not secretly supplied. Relevant code/schema/log findings can be shared through `knowledge` and `evidence.fetch`; expertise boundaries do not isolate knowledge. Credentials and authority remain connector-side.
+
+Permitted operations (further restricted per task):
+
+| Tool | Exactly what it does |
+| --- | --- |
+| `catalog.search` | Find candidate sources/services/repos by feature terms; does not establish the failing component. |
+| `catalog.describe` | Describe one discovered source, capabilities, relationships and freshness. |
+| `case.read` | Read a bounded current, review or report snapshot and its references. |
+| `evidence.fetch` | Fetch cited original excerpts or accepted shared artifacts, including code-to-data read contracts. |
+| `ai.list_workflows` | Discover candidate application workflows by feature terms. |
+| `ai.list_runs` | Find runs matching discovered scope, including successful-status quality failures. |
+| `ai.fetch_run` | Inspect a run tree, observed stages and retained input/output references. |
+| `ai.fetch_observation` | Read selected bounded step input/output/error content. |
+| `ai.rendered_prompt` | Read instructions/context actually sent for the selected generation. |
+| `ai.prompt_version` | Read a specific prompt version for comparison with actual generation inputs. |
+| `ai.retrieval_trace` | Read actual retrieval query/filter/result IDs, scores and available source snippets. |
+| `ai.tool_trace` | Read tool definition version, arguments, outcome and returned evidence content. |
+| `ai.state_handoffs` | Read recorded routing and before/after state across actual agent steps. |
+| `ai.model_metadata` | Read actual recorded provider/model/settings/finish metadata. |
+
+Every argument, returned `data` field, source backend and guard is specified in the [tool catalog](../tool-catalog.md). Tool errors/coverage are connector-owned receipts, distinct from the agent's interpretations.
+
+The model returns shared fields `agent_id`, `execution_status`, `observations`, `interpretations`, `unknowns`, `coverage_receipt_refs`, `suggested_followups`, plus this role's required `ai_findings` object:
+
+```json
+{
+  "run_scope": {
+    "workflow_refs": [
+      "workflow:order-assistant"
+    ],
+    "run_refs": [
+      "run:17"
+    ],
+    "step_refs": [
+      "step:lookup",
+      "step:answer"
+    ],
+    "version_refs": []
+  },
+  "behavior_basis": {
+    "description": "The task was to answer using the returned order.",
+    "evidence_refs": [
+      "E6"
+    ],
+    "assumptions": []
+  },
+  "stage_observations": [
+    {
+      "stage_ref": "step:lookup",
+      "input_refs": [
+        "E7-in"
+      ],
+      "output_refs": [
+        "E7-out"
+      ],
+      "evidence_refs": [
+        "E7"
+      ],
+      "limitations": []
+    },
+    {
+      "stage_ref": "step:answer",
+      "input_refs": [
+        "E8-in"
+      ],
+      "output_refs": [
+        "E8-out"
+      ],
+      "evidence_refs": [
+        "E8"
+      ],
+      "limitations": []
+    }
+  ],
+  "divergence": [
+    {
+      "description": "A returned order field is absent from the retained next-step input.",
+      "expected_refs": [
+        "E6",
+        "E7-out"
+      ],
+      "observed_refs": [
+        "E8-in"
+      ],
+      "unknowns": [
+        "Whether the transformation or trace retention omitted it."
+      ]
+    }
+  ],
+  "candidate_mechanisms": []
+}
+```
+
+This is the exact role-specific object; the linked fixture contains the whole answer and runtime wrapper. Unknowns remain explicit even on `complete` tasks. Runtime validates requested agent identity and source references, adds trusted task/revision IDs, actual tool errors and measured costs, then performs applicability checks before D1 uses the result. A well-formed JSON answer is not proof of semantic correctness.

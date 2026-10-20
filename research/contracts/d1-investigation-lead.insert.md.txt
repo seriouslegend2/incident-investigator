@@ -1,0 +1,59 @@
+## Exact runtime input, tools and structured answer
+
+Runs as a logical task in the investigation backend, not a separate VM or preloaded copy of the application. The backend executes tools and calls the model repeatedly. [Runtime and source locations](../runtime-and-tools.md).
+
+Full required Task-v1 + AgentAnswer-v1 + trusted Result-v1 fixture: [d1-example.json](../contracts/d1-example.json). Exact machine-readable types: [agent-io.schema.json](../contracts/agent-io.schema.json). The fixture is synthetic, not evidence or a mandatory execution order.
+
+The task-specific `role_input` sent to this agent is:
+
+```json
+{
+  "trigger": "bootstrap",
+  "report_text": "The customer group did not receive the message.",
+  "case_snapshot_ref": null,
+  "new_result_refs": []
+}
+```
+
+It also receives the shared question, scope, known premises, unknowns, knowledge references/excerpts, dependency versions and budget. Null/empty fields mean not discovered; they are not secretly supplied. Relevant code/schema/log findings can be shared through `knowledge` and `evidence.fetch`; expertise boundaries do not isolate knowledge. Credentials and authority remain connector-side.
+
+Permitted operations (further restricted per task):
+
+| Tool | Exactly what it does |
+| --- | --- |
+| `catalog.search` | Find candidate sources/services/repos by feature terms; does not establish the failing component. |
+| `catalog.describe` | Describe one discovered source, capabilities, relationships and freshness. |
+| `history.search` | Retrieve useful precedent or intended-behavior documents. |
+| `case.read` | Read a bounded current, review or report snapshot and its references. |
+| `evidence.fetch` | Fetch cited original excerpts or accepted shared artifacts, including code-to-data read contracts. |
+| `delegate_task` | Validate a task proposal, reserve budget and enqueue it once; runtime assigns IDs/revisions. |
+| `request_clarification` | Record and present a focused missing-scope question to the user. |
+
+Every argument, returned `data` field, source backend and guard is specified in the [tool catalog](../tool-catalog.md). Tool errors/coverage are connector-owned receipts, distinct from the agent's interpretations.
+
+The model returns shared fields `agent_id`, `execution_status`, `observations`, `interpretations`, `unknowns`, `coverage_receipt_refs`, `suggested_followups`, plus this role's required `lead_decision` object:
+
+```json
+{
+  "action": "delegate",
+  "knowledge_delta": [
+    {
+      "text": "Catalog search returned a candidate delivery service, not a confirmed incident match.",
+      "kind": "observation",
+      "evidence_refs": [
+        "E0"
+      ]
+    }
+  ],
+  "hypothesis_updates": [],
+  "dispatched_task_refs": [
+    "task:D3-discovery"
+  ],
+  "clarification_ref": null,
+  "report_ref": null,
+  "decision_reason": "Investigate matching attempts before naming a failing component or cause.",
+  "stop_reason": null
+}
+```
+
+This is the exact role-specific object; the linked fixture contains the whole answer and runtime wrapper. Unknowns remain explicit even on `complete` tasks. Runtime validates requested agent identity and source references, adds trusted task/revision IDs, actual tool errors and measured costs, then performs applicability checks before D1 uses the result. A well-formed JSON answer is not proof of semantic correctness.

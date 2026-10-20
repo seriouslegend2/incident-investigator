@@ -1,0 +1,302 @@
+{
+  "description": "Synthetic teaching fixture. Evidence IDs/content are invented and must not enter a real case. Not a fixed agent execution order.",
+  "task": {
+    "protocol_version": "1",
+    "case_id": "I17",
+    "task_id": "T-D5",
+    "attempt_id": "T-D5-A1",
+    "agent_id": "D5",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "inquiry_kind": "hypothesis_test",
+    "question": "Using RC1 and its cited code, establish the relevant row values at incident time; distinguish current from historical evidence.",
+    "known_premises": [
+      {
+        "claim_ref": "C1@1",
+        "evidence_refs": [
+          "E1"
+        ]
+      }
+    ],
+    "exploratory_assumptions": [],
+    "unknowns": [
+      "Incident-time data and causal attribution."
+    ],
+    "why_now": "The current case snapshot establishes the prerequisite for this scoped question.",
+    "expected_information": "Using RC1 and its cited code, establish the relevant row values at incident time; distinguish current from historical evidence.",
+    "scope": {
+      "entity_refs": [
+        "service:delivery",
+        "customer:G42"
+      ],
+      "feature_terms": [
+        "customer group messaging"
+      ],
+      "environment": "production",
+      "time_range": {
+        "start": "2026-10-20T10:25:00Z",
+        "end": "2026-10-20T10:40:00Z",
+        "basis": "event"
+      },
+      "repository_refs": [
+        "repo:delivery"
+      ]
+    },
+    "dependency_versions": [
+      {
+        "ref": "C1",
+        "version": "1"
+      }
+    ],
+    "prerequisite_task_refs": [],
+    "knowledge": {
+      "brief": "Use cited originals; the failure stage is localized, while the underlying cause remains unresolved.",
+      "artifact_refs": [
+        "snapshot:case-4"
+      ],
+      "excerpts": [
+        {
+          "evidence_ref": "E3",
+          "locator": "repo:delivery@fixture-commit-r18:src/delivery.ts:40-66",
+          "text": "Read active group_routes by customer_id; use legacy_destination_id; stop on empty."
+        }
+      ],
+      "read_contract_refs": [
+        "RC1"
+      ]
+    },
+    "budget": {
+      "tool_calls_max": 8,
+      "wall_ms_max": 60000,
+      "model_tokens_max": 12000,
+      "output_tokens_max": 2500
+    },
+    "output_contract": "AgentAnswer-v1",
+    "role_input": {
+      "mode": "history",
+      "source_refs": [
+        "db:messaging-replica"
+      ],
+      "schema_refs": [],
+      "read_contract_refs": [
+        "RC1"
+      ],
+      "entity_keys": [
+        {
+          "field": "customer_id",
+          "value": "G42",
+          "evidence_refs": [
+            "E1"
+          ]
+        }
+      ]
+    }
+  },
+  "answer": {
+    "agent_id": "D5",
+    "execution_status": "partial",
+    "observations": [
+      {
+        "id": "O-D5-1",
+        "text": "The scoped current row has an empty legacy destination.",
+        "evidence_refs": [
+          "E2"
+        ],
+        "temporal_basis": "current",
+        "limitations": []
+      }
+    ],
+    "interpretations": [],
+    "unknowns": [
+      "Incident-time data; broader impact."
+    ],
+    "coverage_receipt_refs": [
+      "call:D5-fixture"
+    ],
+    "suggested_followups": [],
+    "data_findings": {
+      "read_scope": {
+        "source_ref": "db:messaging-replica",
+        "schema_refs": [
+          "schema:routes-v1"
+        ],
+        "read_contract_refs": [
+          "RC1"
+        ],
+        "entity_keys": [
+          {
+            "field": "customer_id",
+            "value": "G42",
+            "evidence_refs": [
+              "E1"
+            ]
+          }
+        ],
+        "query_receipt_refs": [
+          "call:D5-read"
+        ]
+      },
+      "values_or_diagnostics": [
+        {
+          "description": "Current row has destination_id=chat-7 and legacy_destination_id=null.",
+          "evidence_refs": [
+            "E2"
+          ],
+          "redacted": false
+        }
+      ],
+      "temporal_basis": {
+        "current_state_only": true,
+        "historical_state_established": false,
+        "history_interval": null,
+        "freshness_receipt_refs": [
+          "call:D5-read"
+        ],
+        "limitations": [
+          "No configured audit source for the requested interval; replica replay watermark unknown."
+        ]
+      },
+      "consistency_path": [
+        {
+          "source_ref": "db:messaging-replica",
+          "kind": "replica",
+          "evidence_refs": [
+            "E2"
+          ],
+          "unknowns": [
+            "Freshness and actual application read snapshot at incident time."
+          ]
+        }
+      ],
+      "application_read_match": {
+        "status": "partial",
+        "explanation": "Current schema supports the code lookup; incident-time visibility is unverified.",
+        "evidence_refs": [
+          "E2",
+          "E3"
+        ],
+        "unknowns": [
+          "Values visible to the worker at 10:32."
+        ]
+      }
+    }
+  },
+  "result": {
+    "protocol_version": "1",
+    "result_id": "result:D5-fixture",
+    "case_id": "I17",
+    "task_id": "T-D5",
+    "attempt_id": "T-D5-A1",
+    "agent_id": "D5",
+    "case_revision": 4,
+    "scope_revision": 2,
+    "dependency_versions": [
+      {
+        "ref": "C1",
+        "version": "1"
+      }
+    ],
+    "answer_state": "valid",
+    "answer": {
+      "agent_id": "D5",
+      "execution_status": "partial",
+      "observations": [
+        {
+          "id": "O-D5-1",
+          "text": "The scoped current row has an empty legacy destination.",
+          "evidence_refs": [
+            "E2"
+          ],
+          "temporal_basis": "current",
+          "limitations": []
+        }
+      ],
+      "interpretations": [],
+      "unknowns": [
+        "Incident-time data; broader impact."
+      ],
+      "coverage_receipt_refs": [
+        "call:D5-fixture"
+      ],
+      "suggested_followups": [],
+      "data_findings": {
+        "read_scope": {
+          "source_ref": "db:messaging-replica",
+          "schema_refs": [
+            "schema:routes-v1"
+          ],
+          "read_contract_refs": [
+            "RC1"
+          ],
+          "entity_keys": [
+            {
+              "field": "customer_id",
+              "value": "G42",
+              "evidence_refs": [
+                "E1"
+              ]
+            }
+          ],
+          "query_receipt_refs": [
+            "call:D5-read"
+          ]
+        },
+        "values_or_diagnostics": [
+          {
+            "description": "Current row has destination_id=chat-7 and legacy_destination_id=null.",
+            "evidence_refs": [
+              "E2"
+            ],
+            "redacted": false
+          }
+        ],
+        "temporal_basis": {
+          "current_state_only": true,
+          "historical_state_established": false,
+          "history_interval": null,
+          "freshness_receipt_refs": [
+            "call:D5-read"
+          ],
+          "limitations": [
+            "No configured audit source for the requested interval; replica replay watermark unknown."
+          ]
+        },
+        "consistency_path": [
+          {
+            "source_ref": "db:messaging-replica",
+            "kind": "replica",
+            "evidence_refs": [
+              "E2"
+            ],
+            "unknowns": [
+              "Freshness and actual application read snapshot at incident time."
+            ]
+          }
+        ],
+        "application_read_match": {
+          "status": "partial",
+          "explanation": "Current schema supports the code lookup; incident-time visibility is unverified.",
+          "evidence_refs": [
+            "E2",
+            "E3"
+          ],
+          "unknowns": [
+            "Values visible to the worker at 10:32."
+          ]
+        }
+      }
+    },
+    "tool_receipt_refs": [
+      "call:D5-fixture"
+    ],
+    "errors": [],
+    "cost": {
+      "elapsed_ms": 103,
+      "tool_calls": 1,
+      "model_calls": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "backend_scanned_bytes": null
+    }
+  }
+}

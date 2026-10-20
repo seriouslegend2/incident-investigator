@@ -1,0 +1,504 @@
+{
+  "status": "Synthetic teaching fixture; no real source accessed.",
+  "stages": [
+    {
+      "description": "D4 reads only the located implementation range at a discovered immutable revision.",
+      "request": {
+        "tool": "code.read_at_revision",
+        "arguments": {
+          "repository_ref": "repo:delivery",
+          "commit": "fixture-commit-r18",
+          "path": "src/delivery.ts",
+          "start_line": 40,
+          "end_line": 66,
+          "limits": {
+            "max_items": 20,
+            "timeout_ms": 5000,
+            "max_output_bytes": 16000,
+            "max_scan_bytes": 1000000
+          }
+        }
+      },
+      "response": {
+        "call_ref": "call:fixture-code.read_at_revision",
+        "tool": "code.read_at_revision",
+        "status": "ok",
+        "data": {
+          "location": {
+            "repository_ref": "repo:delivery",
+            "commit": "fixture-commit-r18",
+            "path": "src/delivery.ts",
+            "start_line": 40,
+            "end_line": 66,
+            "evidence_refs": [
+              "E3"
+            ]
+          },
+          "content": "Synthetic excerpt: active route lookup by customer_id; read legacy_destination_id; stop on empty."
+        },
+        "evidence_refs": [
+          "E3"
+        ],
+        "coverage": {
+          "source_refs": [
+            "repo:delivery"
+          ],
+          "actual_scope": {
+            "entity_refs": [
+              "service:delivery",
+              "customer:G42"
+            ],
+            "feature_terms": [
+              "customer group messaging"
+            ],
+            "environment": "production",
+            "time_range": null,
+            "repository_refs": [
+              "repo:delivery"
+            ]
+          },
+          "query_description": "D4 reads only the located implementation range at a discovered immutable revision.",
+          "complete_for_requested_scope": true,
+          "snapshot_refs": [
+            "fixture-commit-r18"
+          ],
+          "freshness": {
+            "observed_at": "2026-10-20T10:45:00Z",
+            "watermark": null,
+            "lag_ms": null,
+            "index_updated_at": null
+          },
+          "sampling": null,
+          "retention": null,
+          "partial_reasons": [],
+          "pages_read": 1,
+          "scanned_bytes": null,
+          "scan_limit_reached": false
+        },
+        "next_cursor": null,
+        "error": null,
+        "cost": {
+          "elapsed_ms": 12,
+          "backend_requests": 1,
+          "bytes_scanned": null
+        }
+      }
+    },
+    {
+      "description": "D5 verifies the approved replica maps to the database identity discovered in RC1.",
+      "request": {
+        "tool": "data.describe_source",
+        "arguments": {
+          "source_ref": "db:messaging-replica",
+          "limits": {
+            "max_items": 20,
+            "timeout_ms": 5000,
+            "max_output_bytes": 16000,
+            "max_scan_bytes": 1000000
+          }
+        }
+      },
+      "response": {
+        "call_ref": "call:fixture-data.describe_source",
+        "tool": "data.describe_source",
+        "status": "ok",
+        "data": {
+          "source": {
+            "source_ref": "db:messaging-replica",
+            "kind": "replica",
+            "label": "Messaging read replica",
+            "environment": "production",
+            "capabilities": [
+              "data.inspect_schema",
+              "data.read_bounded"
+            ],
+            "related_refs": [
+              "db:messaging"
+            ],
+            "refreshed_at": "2026-10-20T10:45:00Z",
+            "limitations": [
+              "Replay watermark unavailable; no configured historical row source."
+            ]
+          },
+          "primary_identity_ref": "db:messaging",
+          "replica": true,
+          "schema_search_supported": true,
+          "history_source_refs": [],
+          "replay_watermark": null,
+          "lag_ms": null
+        },
+        "evidence_refs": [
+          "E-source"
+        ],
+        "coverage": {
+          "source_refs": [
+            "db:messaging-replica"
+          ],
+          "actual_scope": {
+            "entity_refs": [
+              "service:delivery",
+              "customer:G42"
+            ],
+            "feature_terms": [
+              "customer group messaging"
+            ],
+            "environment": "production",
+            "time_range": {
+              "start": "2026-10-20T10:45:00Z",
+              "end": "2026-10-20T10:45:01Z",
+              "basis": "query"
+            },
+            "repository_refs": [
+              "repo:delivery"
+            ]
+          },
+          "query_description": "D5 verifies the approved replica maps to the database identity discovered in RC1.",
+          "complete_for_requested_scope": true,
+          "snapshot_refs": [],
+          "freshness": {
+            "observed_at": "2026-10-20T10:45:00Z",
+            "watermark": null,
+            "lag_ms": null,
+            "index_updated_at": null
+          },
+          "sampling": null,
+          "retention": null,
+          "partial_reasons": [],
+          "pages_read": 1,
+          "scanned_bytes": null,
+          "scan_limit_reached": false
+        },
+        "next_cursor": null,
+        "error": null,
+        "cost": {
+          "elapsed_ms": 12,
+          "backend_requests": 1,
+          "bytes_scanned": null
+        }
+      }
+    },
+    {
+      "description": "D5 verifies actual relation/column types; names came from the cited implementation, not a guess.",
+      "request": {
+        "tool": "data.inspect_schema",
+        "arguments": {
+          "source_ref": "db:messaging-replica",
+          "query": "group_routes",
+          "relation": "messaging.group_routes",
+          "cursor": null,
+          "limits": {
+            "max_items": 20,
+            "timeout_ms": 5000,
+            "max_output_bytes": 16000,
+            "max_scan_bytes": 1000000
+          }
+        }
+      },
+      "response": {
+        "call_ref": "call:fixture-data.inspect_schema",
+        "tool": "data.inspect_schema",
+        "status": "ok",
+        "data": {
+          "schema_ref": "schema:routes-v1",
+          "relations": [
+            {
+              "relation": "messaging.group_routes",
+              "kind": "table",
+              "columns": [
+                {
+                  "name": "customer_id",
+                  "type": "text",
+                  "nullable": false
+                },
+                {
+                  "name": "active",
+                  "type": "boolean",
+                  "nullable": false
+                },
+                {
+                  "name": "destination_id",
+                  "type": "text",
+                  "nullable": true
+                },
+                {
+                  "name": "legacy_destination_id",
+                  "type": "text",
+                  "nullable": true
+                }
+              ],
+              "keys": [
+                [
+                  "customer_id"
+                ]
+              ],
+              "relationships": [],
+              "evidence_refs": [
+                "E-schema"
+              ]
+            }
+          ]
+        },
+        "evidence_refs": [
+          "E-schema"
+        ],
+        "coverage": {
+          "source_refs": [
+            "db:messaging-replica"
+          ],
+          "actual_scope": {
+            "entity_refs": [
+              "service:delivery",
+              "customer:G42"
+            ],
+            "feature_terms": [
+              "customer group messaging"
+            ],
+            "environment": "production",
+            "time_range": {
+              "start": "2026-10-20T10:45:00Z",
+              "end": "2026-10-20T10:45:01Z",
+              "basis": "query"
+            },
+            "repository_refs": [
+              "repo:delivery"
+            ]
+          },
+          "query_description": "D5 verifies actual relation/column types; names came from the cited implementation, not a guess.",
+          "complete_for_requested_scope": true,
+          "snapshot_refs": [],
+          "freshness": {
+            "observed_at": "2026-10-20T10:45:00Z",
+            "watermark": null,
+            "lag_ms": null,
+            "index_updated_at": null
+          },
+          "sampling": null,
+          "retention": null,
+          "partial_reasons": [],
+          "pages_read": 1,
+          "scanned_bytes": null,
+          "scan_limit_reached": false
+        },
+        "next_cursor": null,
+        "error": null,
+        "cost": {
+          "elapsed_ms": 12,
+          "backend_requests": 1,
+          "bytes_scanned": null
+        }
+      }
+    },
+    {
+      "description": "D5 reads the current scoped row; this is not evidence of incident-time values at 10:32.",
+      "request": {
+        "tool": "data.read_bounded",
+        "arguments": {
+          "source_ref": "db:messaging-replica",
+          "schema_ref": "schema:routes-v1",
+          "read_contract_ref": "RC1",
+          "relation": "messaging.group_routes",
+          "columns": [
+            "destination_id",
+            "legacy_destination_id"
+          ],
+          "filters": [
+            {
+              "field": "customer_id",
+              "op": "eq",
+              "value": "G42"
+            },
+            {
+              "field": "active",
+              "op": "eq",
+              "value": true
+            }
+          ],
+          "order_by": [],
+          "query_template_ref": null,
+          "template_parameters": [],
+          "cursor": null,
+          "limits": {
+            "max_items": 20,
+            "timeout_ms": 5000,
+            "max_output_bytes": 16000,
+            "max_scan_bytes": 1000000
+          }
+        }
+      },
+      "response": {
+        "call_ref": "call:fixture-data.read_bounded",
+        "tool": "data.read_bounded",
+        "status": "ok",
+        "data": {
+          "columns": [
+            {
+              "name": "destination_id",
+              "type": "text",
+              "redacted": false
+            },
+            {
+              "name": "legacy_destination_id",
+              "type": "text",
+              "redacted": false
+            }
+          ],
+          "rows": [
+            [
+              "chat-7",
+              null
+            ]
+          ],
+          "query_ref": "query:current-route",
+          "query_observed_at": "2026-10-20T10:45:00Z",
+          "replay_watermark": null,
+          "lag_ms": null
+        },
+        "evidence_refs": [
+          "E2"
+        ],
+        "coverage": {
+          "source_refs": [
+            "db:messaging-replica"
+          ],
+          "actual_scope": {
+            "entity_refs": [
+              "service:delivery",
+              "customer:G42"
+            ],
+            "feature_terms": [
+              "customer group messaging"
+            ],
+            "environment": "production",
+            "time_range": {
+              "start": "2026-10-20T10:45:00Z",
+              "end": "2026-10-20T10:45:01Z",
+              "basis": "query"
+            },
+            "repository_refs": [
+              "repo:delivery"
+            ]
+          },
+          "query_description": "D5 reads the current scoped row; this is not evidence of incident-time values at 10:32.",
+          "complete_for_requested_scope": true,
+          "snapshot_refs": [],
+          "freshness": {
+            "observed_at": "2026-10-20T10:45:00Z",
+            "watermark": null,
+            "lag_ms": null,
+            "index_updated_at": null
+          },
+          "sampling": null,
+          "retention": null,
+          "partial_reasons": [],
+          "pages_read": 1,
+          "scanned_bytes": null,
+          "scan_limit_reached": false
+        },
+        "next_cursor": null,
+        "error": null,
+        "cost": {
+          "elapsed_ms": 12,
+          "backend_requests": 1,
+          "bytes_scanned": null
+        }
+      }
+    },
+    {
+      "description": "Alternative outcome: connector timeout is not a missing row.",
+      "request": {
+        "tool": "data.read_bounded",
+        "arguments": {
+          "source_ref": "db:messaging-replica",
+          "schema_ref": "schema:routes-v1",
+          "read_contract_ref": "RC1",
+          "relation": "messaging.group_routes",
+          "columns": [
+            "destination_id",
+            "legacy_destination_id"
+          ],
+          "filters": [
+            {
+              "field": "customer_id",
+              "op": "eq",
+              "value": "G42"
+            },
+            {
+              "field": "active",
+              "op": "eq",
+              "value": true
+            }
+          ],
+          "order_by": [],
+          "query_template_ref": null,
+          "template_parameters": [],
+          "cursor": null,
+          "limits": {
+            "max_items": 20,
+            "timeout_ms": 5000,
+            "max_output_bytes": 16000,
+            "max_scan_bytes": 1000000
+          }
+        }
+      },
+      "response": {
+        "call_ref": "call:fixture-data.read_bounded",
+        "tool": "data.read_bounded",
+        "status": "timeout",
+        "data": null,
+        "evidence_refs": [],
+        "coverage": {
+          "source_refs": [
+            "db:messaging-replica"
+          ],
+          "actual_scope": {
+            "entity_refs": [
+              "service:delivery",
+              "customer:G42"
+            ],
+            "feature_terms": [
+              "customer group messaging"
+            ],
+            "environment": "production",
+            "time_range": {
+              "start": "2026-10-20T10:45:00Z",
+              "end": "2026-10-20T10:45:01Z",
+              "basis": "query"
+            },
+            "repository_refs": [
+              "repo:delivery"
+            ]
+          },
+          "query_description": "Alternative outcome: connector timeout is not a missing row.",
+          "complete_for_requested_scope": false,
+          "snapshot_refs": [],
+          "freshness": {
+            "observed_at": "2026-10-20T10:45:00Z",
+            "watermark": null,
+            "lag_ms": null,
+            "index_updated_at": null
+          },
+          "sampling": null,
+          "retention": null,
+          "partial_reasons": [
+            "No usable result before the enforced deadline."
+          ],
+          "pages_read": 0,
+          "scanned_bytes": null,
+          "scan_limit_reached": false
+        },
+        "next_cursor": null,
+        "error": {
+          "code": "SOURCE_TIMEOUT",
+          "message": "No usable result before the enforced deadline.",
+          "retryable": true,
+          "retry_after_ms": null
+        },
+        "cost": {
+          "elapsed_ms": 12,
+          "backend_requests": 1,
+          "bytes_scanned": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "protocol_version": "1",
+  "result_id": "result:D1-unavailable-fixture",
+  "case_id": "I17",
+  "task_id": "T-D1",
+  "attempt_id": "T-D1-A1",
+  "agent_id": "D1",
+  "case_revision": 0,
+  "scope_revision": 0,
+  "dependency_versions": [],
+  "answer_state": "unavailable",
+  "answer": null,
+  "tool_receipt_refs": [
+    "call:D1-fixture"
+  ],
+  "errors": [
+    {
+      "code": "MODEL_TIMEOUT",
+      "message": "Model response unavailable within the reserved budget.",
+      "retryable": true,
+      "retry_after_ms": null
+    }
+  ],
+  "cost": {
+    "elapsed_ms": 100,
+    "tool_calls": 1,
+    "model_calls": 2,
+    "input_tokens": null,
+    "output_tokens": null,
+    "backend_scanned_bytes": null
+  }
+}
